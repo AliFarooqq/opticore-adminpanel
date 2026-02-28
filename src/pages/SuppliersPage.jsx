@@ -98,7 +98,7 @@ export default function SuppliersPage() {
     <>
       <Header title="Suppliers" />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div className="page-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{suppliers.length} supplier{suppliers.length !== 1 ? 's' : ''} total</p>

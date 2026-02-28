@@ -94,7 +94,7 @@ export default function ContactLensesPage() {
     <>
       <Header title={brand ? `${brand.name} — Contact Lenses` : 'Contact Lenses'} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div className="page-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
             <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
