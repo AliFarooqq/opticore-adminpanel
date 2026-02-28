@@ -25,3 +25,50 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
 }
+
+/* ── Admin Panel Responsive ─────────────────────────────────────────────── */
+.sidebar-nav {
+  transition: transform 0.25s ease;
+}
+
+@media (max-width: 767px) {
+  .sidebar-nav {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh !important;
+    z-index: 50;
+    transform: translateX(-100%);
+  }
+  .sidebar-nav.sidebar-open {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop {
+    display: block !important;
+  }
+  .sidebar-hamburger {
+    display: flex !important;
+  }
+  .header-user-text {
+    display: none !important;
+  }
+  .admin-header {
+    padding: 0 16px !important;
+  }
+  .page-content {
+    padding: 20px 16px !important;
+  }
+  .page-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar-backdrop {
+    display: none !important;
+  }
+  .sidebar-hamburger {
+    display: none !important;
+  }
+}

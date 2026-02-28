@@ -245,7 +245,7 @@ export default function ImportPage() {
     <>
       <Header title="Bulk Import" />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 860, margin: '0 auto', padding: '36px 40px' }}>
           {/* Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 32 }}>
             {[

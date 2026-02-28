@@ -90,7 +90,7 @@ export default function BrandsPage() {
     <>
       <Header title={supplier ? `${supplier.name} — Brands` : 'Brands'} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
             <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
@@ -102,7 +102,7 @@ export default function BrandsPage() {
             <span style={{ color: '#0f172a', fontWeight: 600 }}>{supplier?.name || '…'}</span>
           </nav>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{brands.length} brand{brands.length !== 1 ? 's' : ''} total</p>
             <Button onClick={openAdd}>
               <Plus size={16} /> Add Brand

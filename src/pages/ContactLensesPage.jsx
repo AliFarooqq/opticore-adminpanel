@@ -94,7 +94,7 @@ export default function ContactLensesPage() {
     <>
       <Header title={brand ? `${brand.name} — Contact Lenses` : 'Contact Lenses'} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
             <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
@@ -114,7 +114,7 @@ export default function ContactLensesPage() {
             <span style={{ color: '#0f172a', fontWeight: 600 }}>Contact Lenses</span>
           </nav>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{lenses.length} lens{lenses.length !== 1 ? 'es' : ''} total</p>
             <Button onClick={openAdd}>
               <Plus size={16} /> Add Contact Lens

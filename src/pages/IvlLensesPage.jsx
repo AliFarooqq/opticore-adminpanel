@@ -127,7 +127,7 @@ export default function IvlLensesPage() {
     <>
       <Header title={brand ? `${brand.name} — IVL Lenses` : 'IVL Lenses'} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
             <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
@@ -147,7 +147,7 @@ export default function IvlLensesPage() {
             <span style={{ color: '#0f172a', fontWeight: 600 }}>IVL Lenses</span>
           </nav>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             {/* Filter */}
             <div style={{ display: 'flex', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               {['all', 'stock', 'rx'].map(f => (
