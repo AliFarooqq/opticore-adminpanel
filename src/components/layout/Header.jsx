@@ -18,6 +18,7 @@ export default function Header({ title }) {
         padding: '0 36px',
         flexShrink: 0,
         boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+        position: 'relative', zIndex: 42,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

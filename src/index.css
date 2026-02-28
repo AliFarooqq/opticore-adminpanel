@@ -43,9 +43,6 @@ body {
   .sidebar-nav.sidebar-open {
     transform: translateX(0);
   }
-  .sidebar-backdrop {
-    display: block !important;
-  }
   .sidebar-hamburger {
     display: flex !important;
   }
@@ -65,9 +62,6 @@ body {
 }
 
 @media (min-width: 768px) {
-  .sidebar-backdrop {
-    display: none !important;
-  }
   .sidebar-hamburger {
     display: none !important;
   }

@@ -25,17 +25,17 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile backdrop */}
-      <div
-        className="sidebar-backdrop"
-        onClick={() => setIsOpen(false)}
-        style={{
-          display: 'none',
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 40,
-        }}
-      />
+      {/* Mobile backdrop — only rendered when sidebar is open */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 40,
+          }}
+        />
+      )}
 
       <aside
         className={`sidebar-nav${isOpen ? ' sidebar-open' : ''}`}

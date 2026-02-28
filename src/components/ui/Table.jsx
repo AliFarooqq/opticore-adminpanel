@@ -10,7 +10,7 @@ export default function Table({ columns, data, loading, emptyMessage = 'No data 
 
   return (
     <div style={{ overflowX: 'auto', width: '100%' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+      <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 14 }}>
         <thead>
           <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
             {columns.map(col => (
