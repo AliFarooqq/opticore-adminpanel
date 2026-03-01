@@ -22,28 +22,28 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               {/* Grid editor is full-page, outside normal Layout */}
               <Route
-                path="/suppliers/:supplierId/brands/:brandId/ivl/:lensId/grid"
+                path="/ivl-suppliers/:supplierId/brands/:brandId/ivl/:lensId/grid"
                 element={<GridEditorPage />}
               />
 
               {/* Main app with sidebar layout */}
               <Route element={<Layout />}>
-                <Route path="/suppliers" element={<SuppliersPage />} />
-                <Route path="/suppliers/:supplierId/brands" element={<BrandsPage />} />
-                <Route
-                  path="/suppliers/:supplierId/brands/:brandId/ivl"
-                  element={<IvlLensesPage />}
-                />
-                <Route
-                  path="/suppliers/:supplierId/brands/:brandId/contact"
-                  element={<ContactLensesPage />}
-                />
+                {/* IVL Suppliers */}
+                <Route path="/ivl-suppliers" element={<SuppliersPage supplierType="ivl" />} />
+                <Route path="/ivl-suppliers/:supplierId/brands" element={<BrandsPage supplierType="ivl" />} />
+                <Route path="/ivl-suppliers/:supplierId/brands/:brandId/ivl" element={<IvlLensesPage />} />
+
+                {/* Contact Suppliers */}
+                <Route path="/contact-suppliers" element={<SuppliersPage supplierType="contact" />} />
+                <Route path="/contact-suppliers/:supplierId/brands" element={<BrandsPage supplierType="contact" />} />
+                <Route path="/contact-suppliers/:supplierId/brands/:brandId/contact" element={<ContactLensesPage />} />
+
                 <Route path="/import" element={<ImportPage />} />
               </Route>
             </Route>
 
-            <Route path="/" element={<Navigate to="/suppliers" replace />} />
-            <Route path="*" element={<Navigate to="/suppliers" replace />} />
+            <Route path="/" element={<Navigate to="/ivl-suppliers" replace />} />
+            <Route path="*" element={<Navigate to="/ivl-suppliers" replace />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>

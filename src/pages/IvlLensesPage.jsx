@@ -9,7 +9,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IvlLensForm from '../components/ivlLenses/IvlLensForm';
 import RxRangeEditor from '../components/gridEditor/RxRangeEditor';
 import { getIvlLenses, deleteIvlLens } from '../services/ivlLensesService';
-import { getSupplier } from '../services/suppliersService';
+import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
@@ -20,7 +20,7 @@ export default function IvlLensesPage() {
   // const navigate = useNavigate(); // used by Stock Grid — hidden from client until ready
   const toast = useToast();
 
-  const { data: supplier } = useFirestoreDoc(() => getSupplier(supplierId), [supplierId]);
+  const { data: supplier } = useFirestoreDoc(() => getIvlSupplier(supplierId), [supplierId]);
   const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
   const brand = brands.find(b => b.id === brandId);
 
@@ -93,7 +93,7 @@ export default function IvlLensesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Stock Grid button — hidden from client until ready
           {l.availability === 'stock' && (
-            <Button size="sm" variant="ghost" onClick={() => navigate(`/suppliers/${supplierId}/brands/${brandId}/ivl/${l.id}/grid`)}>
+            <Button size="sm" variant="ghost" onClick={() => navigate(`/ivl-suppliers/${supplierId}/brands/${brandId}/ivl/${l.id}/grid`)}>
               <Grid3X3 size={14} /> Stock Grid
             </Button>
           )} */}
@@ -130,13 +130,13 @@ export default function IvlLensesPage() {
         <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
-            <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
+            <Link to="/ivl-suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
-              Suppliers
+              IVL Suppliers
             </Link>
             <ChevronRight size={13} style={{ color: '#cbd5e1' }} />
-            <Link to={`/suppliers/${supplierId}/brands`} style={{ color: '#64748b', textDecoration: 'none' }}
+            <Link to={`/ivl-suppliers/${supplierId}/brands`} style={{ color: '#64748b', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
               {supplier?.name || '…'}

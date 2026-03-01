@@ -10,7 +10,7 @@ import Button from '../components/ui/Button';
 import ToastContainer from '../components/ui/Toast';
 import { useGridEditor } from '../hooks/useGridEditor';
 import { useToast } from '../hooks/useToast';
-import { getSupplier } from '../services/suppliersService';
+import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { getIvlLens } from '../services/ivlLensesService';
 
@@ -51,7 +51,7 @@ export default function GridEditorPage() {
       setPageLoading(true);
       try {
         const [sup, brandsArr, l] = await Promise.all([
-          getSupplier(supplierId),
+          getIvlSupplier(supplierId),
           getBrands(supplierId),
           getIvlLens(supplierId, brandId, lensId),
         ]);
@@ -97,16 +97,16 @@ export default function GridEditorPage() {
           {/* Breadcrumb — use replace:true so grid is removed from history stack, not stacked on top */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b' }}>
             <button
-              onClick={() => navigate('/suppliers', { replace: true })}
+              onClick={() => navigate('/ivl-suppliers', { replace: true })}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: '#64748b', transition: 'color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
             >
-              Suppliers
+              IVL Suppliers
             </button>
             <ChevronRight size={13} style={{ color: '#cbd5e1' }} />
             <button
-              onClick={() => navigate(`/suppliers/${supplierId}/brands`, { replace: true })}
+              onClick={() => navigate(`/ivl-suppliers/${supplierId}/brands`, { replace: true })}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: '#64748b', transition: 'color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
@@ -115,7 +115,7 @@ export default function GridEditorPage() {
             </button>
             <ChevronRight size={13} style={{ color: '#cbd5e1' }} />
             <button
-              onClick={() => navigate(`/suppliers/${supplierId}/brands/${brandId}/ivl`, { replace: true })}
+              onClick={() => navigate(`/ivl-suppliers/${supplierId}/brands/${brandId}/ivl`, { replace: true })}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: '#64748b', transition: 'color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}

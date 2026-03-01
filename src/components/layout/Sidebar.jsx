@@ -5,7 +5,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { SidebarContext } from './Layout';
 
 const navItems = [
-  { to: '/suppliers', label: 'Suppliers', icon: Building2 },
+  { to: '/ivl-suppliers', label: 'IVL Suppliers', icon: Building2 },
+  { to: '/contact-suppliers', label: 'Contact Suppliers', icon: Building2 },
   // { to: '/import', label: 'Bulk Import', icon: Upload },
 ];
 

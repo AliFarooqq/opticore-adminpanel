@@ -8,7 +8,7 @@ import Badge from '../components/ui/Badge';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ContactLensForm from '../components/contactLenses/ContactLensForm';
 import { getContactLenses, deleteContactLens } from '../services/contactLensesService';
-import { getSupplier } from '../services/suppliersService';
+import { getContactSupplier } from '../services/contactSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
@@ -18,7 +18,7 @@ export default function ContactLensesPage() {
   const { supplierId, brandId } = useParams();
   const toast = useToast();
 
-  const { data: supplier } = useFirestoreDoc(() => getSupplier(supplierId), [supplierId]);
+  const { data: supplier } = useFirestoreDoc(() => getContactSupplier(supplierId), [supplierId]);
   const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
   const brand = brands.find(b => b.id === brandId);
 
@@ -97,13 +97,13 @@ export default function ContactLensesPage() {
         <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
-            <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
+            <Link to="/contact-suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
-              Suppliers
+              Contact Suppliers
             </Link>
             <ChevronRight size={13} style={{ color: '#cbd5e1' }} />
-            <Link to={`/suppliers/${supplierId}/brands`} style={{ color: '#64748b', textDecoration: 'none' }}
+            <Link to={`/contact-suppliers/${supplierId}/brands`} style={{ color: '#64748b', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
               {supplier?.name || '…'}

@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate('/suppliers', { replace: true });
+    if (user) navigate('/ivl-suppliers', { replace: true });
   }, [user, navigate]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     // AUTH BYPASS — milestone 4 (re-enable before production)
-    navigate('/suppliers', { replace: true });
+    navigate('/ivl-suppliers', { replace: true });
     // setLoading(true);
     // try {
     //   await login(email, password);

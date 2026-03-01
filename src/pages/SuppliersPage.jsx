@@ -6,14 +6,22 @@ import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import SupplierForm from '../components/suppliers/SupplierForm';
-import { getSuppliers, deleteSupplier } from '../services/suppliersService';
+import { getIvlSuppliers, deleteIvlSupplier } from '../services/ivlSuppliersService';
+import { getContactSuppliers, deleteContactSupplier } from '../services/contactSuppliersService';
 import { useFirestoreCollection } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
 
-export default function SuppliersPage() {
+export default function SuppliersPage({ supplierType }) {
   const toast = useToast();
   const navigate = useNavigate();
-  const { data: suppliers, loading, reload } = useFirestoreCollection(getSuppliers, []);
+
+  const isIvl = supplierType === 'ivl';
+  const basePath = isIvl ? '/ivl-suppliers' : '/contact-suppliers';
+  const pageTitle = isIvl ? 'IVL Suppliers' : 'Contact Suppliers';
+  const getFn = isIvl ? getIvlSuppliers : getContactSuppliers;
+  const deleteFn = isIvl ? deleteIvlSupplier : deleteContactSupplier;
+
+  const { data: suppliers, loading, reload } = useFirestoreCollection(getFn, [supplierType]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -34,7 +42,7 @@ export default function SuppliersPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteSupplier(deleteTarget.id);
+      await deleteFn(deleteTarget.id);
       toast.success(`"${deleteTarget.name}" deleted`);
       reload();
     } catch (err) {
@@ -70,7 +78,7 @@ export default function SuppliersPage() {
       label: 'Actions',
       render: s => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/suppliers/${s.id}/brands`)}>
+          <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${s.id}/brands`)}>
             View Brands <ChevronRight size={14} />
           </Button>
           <button
@@ -96,7 +104,7 @@ export default function SuppliersPage() {
 
   return (
     <>
-      <Header title="Suppliers" />
+      <Header title={pageTitle} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
         <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -124,6 +132,7 @@ export default function SuppliersPage() {
         onClose={() => setFormOpen(false)}
         supplier={editTarget}
         onSaved={reload}
+        supplierType={supplierType}
       />
 
       <ConfirmDialog

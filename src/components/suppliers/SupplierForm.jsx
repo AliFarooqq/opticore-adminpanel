@@ -4,10 +4,11 @@ import { Upload } from 'lucide-react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { createSupplier, updateSupplier, uploadSupplierLogo } from '../../services/suppliersService';
+import { createIvlSupplier, updateIvlSupplier, uploadIvlSupplierLogo } from '../../services/ivlSuppliersService';
+import { createContactSupplier, updateContactSupplier, uploadContactSupplierLogo } from '../../services/contactSuppliersService';
 import { useToast } from '../../hooks/useToast';
 
-export default function SupplierForm({ isOpen, onClose, supplier, onSaved }) {
+export default function SupplierForm({ isOpen, onClose, supplier, onSaved, supplierType }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
@@ -45,23 +46,27 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved }) {
     setLogoPreview(URL.createObjectURL(file));
   }
 
+  const createFn = supplierType === 'ivl' ? createIvlSupplier : createContactSupplier;
+  const updateFn = supplierType === 'ivl' ? updateIvlSupplier : updateContactSupplier;
+  const uploadLogoFn = supplierType === 'ivl' ? uploadIvlSupplierLogo : uploadContactSupplierLogo;
+
   async function onSubmit(data) {
     setLoading(true);
     try {
       let logoUrl = supplier?.logoUrl || '';
 
       if (supplier) {
-        await updateSupplier(supplier.id, { ...data, logoUrl });
+        await updateFn(supplier.id, { ...data, logoUrl });
         if (logoFile) {
-          logoUrl = await uploadSupplierLogo(supplier.id, logoFile);
-          await updateSupplier(supplier.id, { logoUrl });
+          logoUrl = await uploadLogoFn(supplier.id, logoFile);
+          await updateFn(supplier.id, { logoUrl });
         }
         toast.success('Supplier updated successfully');
       } else {
-        const id = await createSupplier({ ...data, logoUrl: '' });
+        const id = await createFn({ ...data, logoUrl: '' });
         if (logoFile) {
-          logoUrl = await uploadSupplierLogo(id, logoFile);
-          await updateSupplier(id, { logoUrl });
+          logoUrl = await uploadLogoFn(id, logoFile);
+          await updateFn(id, { logoUrl });
         }
         toast.success('Supplier created successfully');
       }
@@ -79,7 +84,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={supplier ? 'Edit Supplier' : 'Add Supplier'}
+      title={supplier ? 'Edit Supplier' : supplierType === 'ivl' ? 'Add IVL Supplier' : 'Add Contact Supplier'}
       size="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">

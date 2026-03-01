@@ -7,16 +7,22 @@ import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import BrandForm from '../components/brands/BrandForm';
 import { getBrands, deleteBrand } from '../services/brandsService';
-import { getSupplier } from '../services/suppliersService';
+import { getIvlSupplier } from '../services/ivlSuppliersService';
+import { getContactSupplier } from '../services/contactSuppliersService';
 import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
 
-export default function BrandsPage() {
+export default function BrandsPage({ supplierType }) {
   const { supplierId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const { data: supplier } = useFirestoreDoc(() => getSupplier(supplierId), [supplierId]);
+  const isIvl = supplierType === 'ivl';
+  const basePath = isIvl ? '/ivl-suppliers' : '/contact-suppliers';
+  const suppliersLabel = isIvl ? 'IVL Suppliers' : 'Contact Suppliers';
+  const getSupplierFn = isIvl ? getIvlSupplier : getContactSupplier;
+
+  const { data: supplier } = useFirestoreDoc(() => getSupplierFn(supplierId), [supplierId, supplierType]);
   const { data: brands, loading, reload } = useFirestoreCollection(
     () => getBrands(supplierId),
     [supplierId]
@@ -59,12 +65,15 @@ export default function BrandsPage() {
       label: 'Actions',
       render: b => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/suppliers/${supplierId}/brands/${b.id}/ivl`)}>
-            IVL Lenses <ChevronRight size={14} />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/suppliers/${supplierId}/brands/${b.id}/contact`)}>
-            Contact Lenses <ChevronRight size={14} />
-          </Button>
+          {isIvl ? (
+            <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${supplierId}/brands/${b.id}/ivl`)}>
+              IVL Lenses <ChevronRight size={14} />
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${supplierId}/brands/${b.id}/contact`)}>
+              Contact Lenses <ChevronRight size={14} />
+            </Button>
+          )}
           <button
             onClick={() => openEdit(b)}
             style={{ padding: 7, borderRadius: 7, border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
@@ -93,10 +102,10 @@ export default function BrandsPage() {
         <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
-            <Link to="/suppliers" style={{ color: '#64748b', textDecoration: 'none' }}
+            <Link to={basePath} style={{ color: '#64748b', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
               onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
-              Suppliers
+              {suppliersLabel}
             </Link>
             <ChevronRight size={13} style={{ color: '#cbd5e1' }} />
             <span style={{ color: '#0f172a', fontWeight: 600 }}>{supplier?.name || '…'}</span>
