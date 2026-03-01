@@ -67,11 +67,11 @@ export default function BrandsPage({ supplierType }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {isIvl ? (
             <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${supplierId}/brands/${b.id}/ivl`)}>
-              IVL Lenses <ChevronRight size={14} />
+              Products <ChevronRight size={14} />
             </Button>
           ) : (
             <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${supplierId}/brands/${b.id}/contact`)}>
-              Contact Lenses <ChevronRight size={14} />
+              Products <ChevronRight size={14} />
             </Button>
           )}
           <button
