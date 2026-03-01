@@ -10,6 +10,7 @@ export const LENS_TYPES = [
   'drive',
   'polar',
   'photopolar',
+  'all',
 ];
 
 export const GEOMETRIES = ['sph', 'as', 'both'];
@@ -54,6 +55,7 @@ export const LENS_TYPE_LABELS = {
   drive: 'Drive',
   polar: 'Polar',
   photopolar: 'Photopolar',
+  all: 'All',
 };
 
 export const GEOMETRY_LABELS = {
