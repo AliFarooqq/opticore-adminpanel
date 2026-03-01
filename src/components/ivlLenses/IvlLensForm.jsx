@@ -287,7 +287,6 @@ const defaultValues = {
   material: 'plastic',
   lensTypes: ['clear'],
   refractiveIndex: '1.60',
-  refractiveIndexCustom: '',
   geometry: 'sph',
   coating: '',
   color: '',
@@ -300,7 +299,6 @@ const defaultValues = {
 export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
-  const [showCustomIndex, setShowCustomIndex] = useState(false);
 
   const {
     register,
@@ -315,15 +313,12 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
   useEffect(() => {
     if (!isOpen) return;
     if (lens) {
-      const isCustomIndex = !REFRACTIVE_INDICES.includes(lens.refractiveIndex);
-      setShowCustomIndex(isCustomIndex);
       reset({
         productName: lens.productName || '',
         design: lens.design || 'single_vision',
         material: lens.material || 'plastic',
         lensTypes: lens.lensTypes?.length ? lens.lensTypes : ['clear'],
-        refractiveIndex: isCustomIndex ? 'other' : String(lens.refractiveIndex),
-        refractiveIndexCustom: isCustomIndex ? String(lens.refractiveIndex) : '',
+        refractiveIndex: String(lens.refractiveIndex),
         geometry: lens.geometry || 'sph',
         coating: lens.coating || '',
         color: lens.color || '',
@@ -333,7 +328,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
     } else {
-      setShowCustomIndex(false);
       reset(defaultValues);
     }
   }, [isOpen, lens, reset]);
@@ -341,10 +335,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
   async function onSubmit(data) {
     setLoading(true);
     try {
-      const refractiveIndex =
-        data.refractiveIndex === 'other'
-          ? parseFloat(data.refractiveIndexCustom)
-          : parseFloat(data.refractiveIndex);
+      const refractiveIndex = parseFloat(data.refractiveIndex);
 
       const payload = {
         productName: data.productName,
@@ -446,27 +437,24 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               )}
             />
 
-            {/* Refractive Index — keep as inline buttons */}
+            {/* Refractive Index */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Refractive Index</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {REFRACTIVE_INDICES.map(idx => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => {
-                      setValue('refractiveIndex', String(idx));
-                      setShowCustomIndex(false);
-                    }}
+                    onClick={() => setValue('refractiveIndex', String(idx))}
                     style={{
                       padding: '7px 14px',
                       borderRadius: 8,
-                      border: watch('refractiveIndex') === String(idx) && !showCustomIndex ? '1.5px solid #1e3a5f' : '1.5px solid #cbd5e1',
+                      border: watch('refractiveIndex') === String(idx) ? '1.5px solid #1e3a5f' : '1.5px solid #cbd5e1',
                       fontSize: 14,
                       fontWeight: 600,
                       cursor: 'pointer',
-                      background: watch('refractiveIndex') === String(idx) && !showCustomIndex ? '#1e3a5f' : '#fff',
-                      color: watch('refractiveIndex') === String(idx) && !showCustomIndex ? '#fff' : '#475569',
+                      background: watch('refractiveIndex') === String(idx) ? '#1e3a5f' : '#fff',
+                      color: watch('refractiveIndex') === String(idx) ? '#fff' : '#475569',
                       transition: 'background 0.15s, color 0.15s',
                       whiteSpace: 'nowrap',
                     }}
@@ -474,37 +462,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                     {idx.toFixed(2)}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setValue('refractiveIndex', 'other');
-                    setShowCustomIndex(true);
-                  }}
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: 8,
-                    border: showCustomIndex ? '1.5px solid #1e3a5f' : '1.5px solid #cbd5e1',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    background: showCustomIndex ? '#1e3a5f' : '#fff',
-                    color: showCustomIndex ? '#fff' : '#475569',
-                    transition: 'background 0.15s, color 0.15s',
-                  }}
-                >
-                  Other
-                </button>
-                {showCustomIndex && (
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. 1.71"
-                    {...register('refractiveIndexCustom', {
-                      validate: v => !showCustomIndex || (!!v && !isNaN(v)) || 'Enter a valid index',
-                    })}
-                    error={errors.refractiveIndexCustom?.message}
-                  />
-                )}
               </div>
             </div>
 

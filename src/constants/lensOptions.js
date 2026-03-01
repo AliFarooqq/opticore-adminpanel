@@ -14,7 +14,7 @@ export const LENS_TYPES = [
 
 export const GEOMETRIES = ['sph', 'as', 'both'];
 
-export const REFRACTIVE_INDICES = [1.50, 1.53, 1.56, 1.60, 1.67, 1.74];
+export const REFRACTIVE_INDICES = [1.50, 1.53, 1.56, 1.59, 1.60, 1.67, 1.74];
 
 export const WEARING_TIMES = ['yearly', 'semi_annual', 'monthly', 'bi_weekly', 'daily'];
 
