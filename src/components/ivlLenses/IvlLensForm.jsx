@@ -11,6 +11,7 @@ import {
   GEOMETRIES, GEOMETRY_LABELS,
   REFRACTIVE_INDICES,
   CYL_FORMAT_LABELS,
+  IVL_DIAMETER_OPTIONS,
 } from '../../constants/lensOptions';
 import { createIvlLens, updateIvlLens } from '../../services/ivlLensesService';
 import { useToast } from '../../hooks/useToast';
@@ -106,6 +107,51 @@ function BottomSheetSelector({ label, options, labels, value, onChange }) {
 }
 
 
+// Diameter list picker (no label — label lives in the parent block)
+function DiameterListPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const displayLabel = value === 'all' ? 'All' : value ? `${value} mm` : '—';
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: 44, padding: '0 14px',
+          borderRadius: 10, border: '1.5px solid #e2e8f0',
+          background: '#f8fafc', cursor: 'pointer',
+          fontSize: 14, color: '#0f172a', fontWeight: 500,
+          textAlign: 'left', width: '100%',
+        }}
+      >
+        <span>{displayLabel}</span>
+        <span style={{ color: '#94a3b8', fontSize: 11 }}>▾</span>
+      </button>
+      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Diameter">
+        {IVL_DIAMETER_OPTIONS.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => { onChange(opt); setOpen(false); }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '15px 20px', border: 'none', background: 'none', cursor: 'pointer',
+              fontSize: 14, textAlign: 'left',
+              color: value === opt ? '#1e3a5f' : '#374151',
+              fontWeight: value === opt ? 700 : 400,
+              borderBottom: '1px solid #f8fafc',
+            }}
+          >
+            <span>{opt === 'all' ? 'All' : `${opt} mm`}</span>
+            {value === opt && <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>}
+          </button>
+        ))}
+      </BottomSheet>
+    </>
+  );
+}
+
 // ── Remaining inline selectors (Geometry, Availability, CYL Format) ──────────
 
 function RadioGroup({ label, options, labels, value, onChange, error }) {
@@ -179,6 +225,8 @@ const defaultValues = {
   geometry: 'sph',
   coating: '',
   color: '',
+  diameterMode: 'list',
+  diameter: '60',
   availability: 'stock',
   cylFormat: 'minus',
   wholesalePrice: '',
@@ -211,6 +259,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: lens.geometry || 'sph',
         coating: lens.coating || '',
         color: lens.color || '',
+        diameterMode: lens.diameter != null && !IVL_DIAMETER_OPTIONS.includes(String(lens.diameter)) ? 'rx' : 'list',
+        diameter: lens.diameter != null ? String(lens.diameter) : '60',
         availability: lens.availability || 'stock',
         cylFormat: lens.cylFormat || 'minus',
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
@@ -235,6 +285,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: data.geometry,
         coating: data.coating || '',
         color: data.color || null,
+        diameter: data.diameter || null,
         availability: data.availability,
         cylFormat: data.cylFormat,
         wholesalePrice: parseFloat(data.wholesalePrice),
@@ -352,6 +403,30 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Diameter */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Diameter</label>
+              <ToggleGroup
+                options={['list', 'rx']}
+                labels={{ list: 'List', rx: 'RX (Custom)' }}
+                value={watch('diameterMode')}
+                onChange={(mode) => {
+                  setValue('diameterMode', mode);
+                  if (mode === 'list' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
+                    setValue('diameter', '60');
+                  }
+                }}
+              />
+              {watch('diameterMode') === 'list' ? (
+                <DiameterListPicker
+                  value={watch('diameter')}
+                  onChange={(v) => setValue('diameter', v)}
+                />
+              ) : (
+                <Input placeholder="e.g. 72" {...register('diameter')} />
+              )}
             </div>
 
             <Controller
