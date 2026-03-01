@@ -1,6 +1,6 @@
-export const DESIGNS = ['single_vision', 'relax', 'progressive', 'bifocal'];
+export const DESIGNS = ['single_vision', 'relax', 'office', 'progressive', 'bifocal', 'myopia_control'];
 
-export const MATERIALS = ['plastic', 'mineral', 'polycarbonate', 'trivex'];
+export const MATERIALS = ['plastic', 'polycarbonate', 'trivex', 'mineral'];
 
 export const LENS_TYPES = [
   'clear',
@@ -33,15 +33,17 @@ export const CYL_FORMATS = ['plus', 'minus'];
 export const DESIGN_LABELS = {
   single_vision: 'Single Vision',
   relax: 'Relax',
+  office: 'Office',
   progressive: 'Progressive',
   bifocal: 'Bifocal',
+  myopia_control: 'Myopia Control',
 };
 
 export const MATERIAL_LABELS = {
   plastic: 'Plastic',
-  mineral: 'Mineral',
   polycarbonate: 'Polycarbonate',
   trivex: 'Trivex',
+  mineral: 'Mineral',
 };
 
 export const LENS_TYPE_LABELS = {
