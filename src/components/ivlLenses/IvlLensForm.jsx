@@ -217,6 +217,7 @@ function ToggleGroup({ options, labels, value, onChange }) {
 // ── Form ─────────────────────────────────────────────────────────────────────
 
 const defaultValues = {
+  availability: 'stock',
   productName: '',
   design: 'single_vision',
   material: 'plastic',
@@ -225,9 +226,7 @@ const defaultValues = {
   geometry: 'sph',
   coating: '',
   color: '',
-  diameterMode: 'list',
   diameter: '60',
-  availability: 'stock',
   cylFormat: 'minus',
   wholesalePrice: '',
   retailPrice: '',
@@ -259,7 +258,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: lens.geometry || 'sph',
         coating: lens.coating || '',
         color: lens.color || '',
-        diameterMode: lens.diameter != null && !IVL_DIAMETER_OPTIONS.includes(String(lens.diameter)) ? 'rx' : 'list',
         diameter: lens.diameter != null ? String(lens.diameter) : '60',
         availability: lens.availability || 'stock',
         cylFormat: lens.cylFormat || 'minus',
@@ -316,6 +314,28 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Product Type — first field */}
+        <div>
+          <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
+          <Controller
+            name="availability"
+            control={control}
+            render={({ field }) => (
+              <ToggleGroup
+                options={['stock', 'rx']}
+                labels={{ stock: 'Stock', rx: 'RX' }}
+                value={field.value}
+                onChange={(v) => {
+                  field.onChange(v);
+                  if (v === 'stock' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
+                    setValue('diameter', '60');
+                  }
+                }}
+              />
+            )}
+          />
+        </div>
+
         {/* Basic Info */}
         <section>
           <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Basic Info</h3>
@@ -405,21 +425,10 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               </div>
             </div>
 
-            {/* Diameter */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Diameter — List for Stock, free input for RX */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Diameter</label>
-              <ToggleGroup
-                options={['list', 'rx']}
-                labels={{ list: 'List', rx: 'RX (Custom)' }}
-                value={watch('diameterMode')}
-                onChange={(mode) => {
-                  setValue('diameterMode', mode);
-                  if (mode === 'list' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
-                    setValue('diameter', '60');
-                  }
-                }}
-              />
-              {watch('diameterMode') === 'list' ? (
+              {watch('availability') === 'stock' ? (
                 <DiameterListPicker
                   value={watch('diameter')}
                   onChange={(v) => setValue('diameter', v)}
@@ -448,41 +457,23 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
           </div>
         </section>
 
-        {/* Availability & Format */}
+        {/* Format */}
         <section>
-          <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Availability &amp; Format</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Availability</label>
-              <Controller
-                name="availability"
-                control={control}
-                render={({ field }) => (
-                  <ToggleGroup
-                    options={['stock', 'rx']}
-                    labels={{ stock: 'Stock', rx: 'RX' }}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>CYL Format</label>
-              <Controller
-                name="cylFormat"
-                control={control}
-                render={({ field }) => (
-                  <ToggleGroup
-                    options={['plus', 'minus']}
-                    labels={CYL_FORMAT_LABELS}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
+          <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Format</h3>
+          <div>
+            <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>CYL Format</label>
+            <Controller
+              name="cylFormat"
+              control={control}
+              render={({ field }) => (
+                <ToggleGroup
+                  options={['plus', 'minus']}
+                  labels={CYL_FORMAT_LABELS}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
         </section>
 
