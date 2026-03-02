@@ -317,10 +317,19 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Product Type — shown when editing, or when on the "All" tab for new lenses */}
-        {(lens || activeTab === 'all') && (
-          <div>
-            <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
+        {/* Product Type */}
+        <div>
+          <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
+          {!lens && activeTab !== 'all' ? (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '8px 18px', borderRadius: 8,
+              background: '#1e3a5f', color: '#fff',
+              fontSize: 14, fontWeight: 600,
+            }}>
+              {activeTab === 'stock' ? 'Stock' : 'RX'}
+            </div>
+          ) : (
             <Controller
               name="availability"
               control={control}
@@ -338,8 +347,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                 />
               )}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Basic Info */}
         <section>
