@@ -188,6 +188,7 @@ export default function IvlLensesPage() {
         brandId={brandId}
         lens={editTarget}
         onSaved={reload}
+        activeTab={filter}
       />
 
       <ConfirmDialog

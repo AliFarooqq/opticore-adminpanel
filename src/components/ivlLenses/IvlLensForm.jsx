@@ -232,7 +232,7 @@ const defaultValues = {
   retailPrice: '',
 };
 
-export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved }) {
+export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -265,9 +265,12 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
     } else {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        availability: activeTab !== 'all' ? activeTab : defaultValues.availability,
+      });
     }
-  }, [isOpen, lens, reset]);
+  }, [isOpen, lens, reset, activeTab]);
 
   async function onSubmit(data) {
     setLoading(true);
@@ -314,27 +317,29 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Product Type — first field */}
-        <div>
-          <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
-          <Controller
-            name="availability"
-            control={control}
-            render={({ field }) => (
-              <ToggleGroup
-                options={['stock', 'rx']}
-                labels={{ stock: 'Stock', rx: 'RX' }}
-                value={field.value}
-                onChange={(v) => {
-                  field.onChange(v);
-                  if (v === 'stock' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
-                    setValue('diameter', '60');
-                  }
-                }}
-              />
-            )}
-          />
-        </div>
+        {/* Product Type — shown when editing, or when on the "All" tab for new lenses */}
+        {(lens || activeTab === 'all') && (
+          <div>
+            <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
+            <Controller
+              name="availability"
+              control={control}
+              render={({ field }) => (
+                <ToggleGroup
+                  options={['stock', 'rx']}
+                  labels={{ stock: 'Stock', rx: 'RX' }}
+                  value={field.value}
+                  onChange={(v) => {
+                    field.onChange(v);
+                    if (v === 'stock' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
+                      setValue('diameter', '60');
+                    }
+                  }}
+                />
+              )}
+            />
+          </div>
+        )}
 
         {/* Basic Info */}
         <section>
