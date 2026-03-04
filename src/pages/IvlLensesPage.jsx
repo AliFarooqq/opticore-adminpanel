@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Pencil, Trash2, Plus, ChevronRight, /* Grid3X3, */ Sliders } from 'lucide-react';
+import { Pencil, Trash2, Plus, ChevronRight /* Grid3X3 */ } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IvlLensForm from '../components/ivlLenses/IvlLensForm';
-import RxRangeEditor from '../components/gridEditor/RxRangeEditor';
 import { getIvlLenses, deleteIvlLens } from '../services/ivlLensesService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
@@ -34,7 +33,6 @@ export default function IvlLensesPage() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [rxTarget, setRxTarget] = useState(null);
 
   const filteredLenses = lenses.filter(l => {
     if (filter === 'stock') return l.availability === 'stock';
@@ -97,12 +95,7 @@ export default function IvlLensesPage() {
               <Grid3X3 size={14} /> Stock Grid
             </Button>
           )} */}
-          {l.availability === 'rx' && (
-            <Button size="sm" variant="ghost" onClick={() => setRxTarget(l)}>
-              <Sliders size={14} /> RX Range
-            </Button>
-          )}
-          <button
+<button
             onClick={() => openEdit(l)}
             style={{ padding: 7, borderRadius: 7, border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
             onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569'; }}
@@ -200,16 +193,6 @@ export default function IvlLensesPage() {
         message={`Are you sure you want to delete "${deleteTarget?.productName}"?`}
       />
 
-      {rxTarget && (
-        <RxRangeEditor
-          isOpen={!!rxTarget}
-          onClose={() => setRxTarget(null)}
-          supplierId={supplierId}
-          brandId={brandId}
-          lens={rxTarget}
-          onSaved={reload}
-        />
-      )}
     </>
   );
 }
