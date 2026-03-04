@@ -30,6 +30,7 @@ export default function Button({
   onClick,
   type = 'button',
   className = '',
+  style: styleProp,
   children,
 }) {
   const vStyle = variantStyles[variant] || variantStyles.primary;
@@ -44,6 +45,7 @@ export default function Button({
       style={{
         ...vStyle,
         ...sStyle,
+        ...styleProp,
         boxSizing: 'border-box',
         borderRadius: 10,
         fontWeight: 600,
