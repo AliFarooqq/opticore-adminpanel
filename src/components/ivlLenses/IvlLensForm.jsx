@@ -16,6 +16,10 @@ import {
 import { createIvlLens, updateIvlLens } from '../../services/ivlLensesService';
 import { useToast } from '../../hooks/useToast';
 
+const NUMERIC_DIAMETERS = IVL_DIAMETER_OPTIONS.filter(d => d !== 'all');
+
+function genId() { return Math.random().toString(36).slice(2, 9); }
+
 // ── Bottom sheet primitives ──────────────────────────────────────────────────
 
 function BottomSheet({ isOpen, onClose, title, children }) {
@@ -106,53 +110,76 @@ function BottomSheetSelector({ label, options, labels, value, onChange }) {
   );
 }
 
-
-// Diameter list picker (no label — label lives in the parent block)
-function DiameterListPicker({ value, onChange }) {
+// Multi-select bottom sheet for RX variant diameters
+function DiameterMultiSelect({ selected, onChange }) {
   const [open, setOpen] = useState(false);
-  const displayLabel = value === 'all' ? 'All' : value ? `${value} mm` : '—';
+  const [draft, setDraft] = useState(selected);
+
+  function openSheet() {
+    setDraft(selected);
+    setOpen(true);
+  }
+
+  function toggle(d) {
+    setDraft(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
+  }
+
+  function done() {
+    onChange(draft);
+    setOpen(false);
+  }
+
+  const displayLabel = selected.length === 0
+    ? '— Select diameters'
+    : selected.map(d => `${d} mm`).join(', ');
+
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openSheet}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: 44, padding: '0 14px',
           borderRadius: 10, border: '1.5px solid #e2e8f0',
           background: '#f8fafc', cursor: 'pointer',
-          fontSize: 14, color: '#0f172a', fontWeight: 500,
+          fontSize: 14, color: selected.length === 0 ? '#94a3b8' : '#0f172a', fontWeight: 500,
           textAlign: 'left', width: '100%',
         }}
       >
         <span>{displayLabel}</span>
         <span style={{ color: '#94a3b8', fontSize: 11 }}>▾</span>
       </button>
-      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Diameter">
-        {IVL_DIAMETER_OPTIONS.map(opt => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => { onChange(opt); setOpen(false); }}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '15px 20px', border: 'none', background: 'none', cursor: 'pointer',
-              fontSize: 14, textAlign: 'left',
-              color: value === opt ? '#1e3a5f' : '#374151',
-              fontWeight: value === opt ? 700 : 400,
-              borderBottom: '1px solid #f8fafc',
-            }}
-          >
-            <span>{opt === 'all' ? 'All' : `${opt} mm`}</span>
-            {value === opt && <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>}
-          </button>
-        ))}
+      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Select Diameters">
+        <div style={{ overflowY: 'auto' }}>
+          {NUMERIC_DIAMETERS.map(d => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => toggle(d)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '15px 20px', border: 'none', background: 'none', cursor: 'pointer',
+                fontSize: 14, textAlign: 'left',
+                color: draft.includes(d) ? '#1e3a5f' : '#374151',
+                fontWeight: draft.includes(d) ? 700 : 400,
+                borderBottom: '1px solid #f8fafc',
+              }}
+            >
+              <span>{d} mm</span>
+              {draft.includes(d) && <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+          <Button style={{ width: '100%' }} onClick={done}>Done</Button>
+        </div>
       </BottomSheet>
     </>
   );
 }
 
-// ── Remaining inline selectors (Geometry, Availability, CYL Format) ──────────
+// ── Remaining inline selectors ────────────────────────────────────────────────
 
 function RadioGroup({ label, options, labels, value, onChange, error }) {
   return (
@@ -226,7 +253,6 @@ const defaultValues = {
   geometry: 'sph',
   coating: '',
   color: '',
-  diameter: '60',
   cylFormat: 'minus',
   wholesalePrice: '',
   retailPrice: '',
@@ -235,6 +261,7 @@ const defaultValues = {
 export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [variants, setVariants] = useState([{ id: genId(), diameters: [] }]);
 
   const {
     register,
@@ -258,21 +285,42 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: lens.geometry || 'sph',
         coating: lens.coating || '',
         color: lens.color || '',
-        diameter: lens.diameter != null ? String(lens.diameter) : '60',
         availability: lens.availability || 'stock',
         cylFormat: lens.cylFormat || 'minus',
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
+      setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameters: [] }]);
     } else {
       reset({
         ...defaultValues,
         availability: activeTab !== 'all' ? activeTab : defaultValues.availability,
       });
+      setVariants([{ id: genId(), diameters: [] }]);
     }
   }, [isOpen, lens, reset, activeTab]);
 
+  function addVariant() {
+    setVariants(prev => [...prev, { id: genId(), diameters: [] }]);
+  }
+
+  function removeVariant(id) {
+    setVariants(prev => prev.filter(v => v.id !== id));
+  }
+
+  function updateVariantDiameters(id, diameters) {
+    setVariants(prev => prev.map(v => v.id === id ? { ...v, diameters } : v));
+  }
+
   async function onSubmit(data) {
+    if (data.availability === 'rx') {
+      const emptyVariant = variants.find(v => v.diameters.length === 0);
+      if (emptyVariant) {
+        toast.error('Each variant must have at least one diameter selected');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const refractiveIndex = parseFloat(data.refractiveIndex);
@@ -286,11 +334,11 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: data.geometry,
         coating: data.coating || '',
         color: data.color || null,
-        diameter: data.diameter || null,
         availability: data.availability,
         cylFormat: data.cylFormat,
         wholesalePrice: parseFloat(data.wholesalePrice),
         retailPrice: data.retailPrice ? parseFloat(data.retailPrice) : null,
+        ...(data.availability === 'rx' ? { variants } : {}),
       };
 
       if (lens) {
@@ -308,6 +356,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
       setLoading(false);
     }
   }
+
+  const availability = watch('availability');
 
   return (
     <Modal
@@ -338,12 +388,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                   options={['stock', 'rx']}
                   labels={{ stock: 'Stock', rx: 'RX' }}
                   value={field.value}
-                  onChange={(v) => {
-                    field.onChange(v);
-                    if (v === 'stock' && !IVL_DIAMETER_OPTIONS.includes(watch('diameter'))) {
-                      setValue('diameter', '60');
-                    }
-                  }}
+                  onChange={field.onChange}
                 />
               )}
             />
@@ -360,7 +405,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               {...register('productName', { required: 'Product name is required' })}
             />
 
-            {/* Design — bottom sheet, single select */}
             <Controller
               name="design"
               control={control}
@@ -375,7 +419,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               )}
             />
 
-            {/* Material — bottom sheet, single select */}
             <Controller
               name="material"
               control={control}
@@ -396,7 +439,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         <section>
           <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Lens Characteristics</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Lens Types — bottom sheet, single select */}
             <Controller
               name="lensTypes"
               control={control}
@@ -439,19 +481,6 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               </div>
             </div>
 
-            {/* Diameter — List for Stock, free input for RX */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Diameter</label>
-              {watch('availability') === 'stock' ? (
-                <DiameterListPicker
-                  value={watch('diameter')}
-                  onChange={(v) => setValue('diameter', v)}
-                />
-              ) : (
-                <Input placeholder="e.g. 72" {...register('diameter')} />
-              )}
-            </div>
-
             <Controller
               name="geometry"
               control={control}
@@ -470,6 +499,63 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Input label="Color (optional)" {...register('color')} />
           </div>
         </section>
+
+        {/* Variants — RX only */}
+        {availability === 'rx' && (
+          <section>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Variants</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {variants.map((v, i) => (
+                <div
+                  key={v.id}
+                  style={{
+                    border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px 16px',
+                    background: '#f8fafc',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>Variant {i + 1}</span>
+                    {variants.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(v.id)}
+                        style={{
+                          border: 'none', background: 'none', cursor: 'pointer',
+                          color: '#94a3b8', fontSize: 18, lineHeight: 1, padding: '2px 6px',
+                          borderRadius: 6,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 6 }}>Diameters</label>
+                  <DiameterMultiSelect
+                    selected={v.diameters}
+                    onChange={(diameters) => updateVariantDiameters(v.id, diameters)}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addVariant}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '10px 0', borderRadius: 10,
+                  border: '1.5px dashed #cbd5e1', background: 'none', cursor: 'pointer',
+                  fontSize: 13, fontWeight: 600, color: '#64748b',
+                  transition: 'border-color 0.15s, color 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#1e3a5f'; e.currentTarget.style.color = '#1e3a5f'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#64748b'; }}
+              >
+                + Add Variant
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Format */}
         <section>
