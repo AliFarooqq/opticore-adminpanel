@@ -580,7 +580,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Input
               label="Wholesale Price *"
               type="number"
-              step="10"
+              step="0.01"
+              min="0.01"
               prefix="€"
               error={errors.wholesalePrice?.message}
               {...register('wholesalePrice', { required: 'Wholesale price is required' })}
@@ -588,7 +589,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Input
               label="Retail Price (optional)"
               type="number"
-              step="10"
+              step="0.01"
+              min="0.01"
               prefix="€"
               {...register('retailPrice')}
             />
