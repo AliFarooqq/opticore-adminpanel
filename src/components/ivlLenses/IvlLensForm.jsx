@@ -248,7 +248,7 @@ const defaultValues = {
 export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
-  const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' } }]);
+  const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
 
   const {
     register,
@@ -277,26 +277,26 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
-      setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameter: { mode: 'single', value: '' } }]);
+      setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
     } else {
       reset({
         ...defaultValues,
         availability: activeTab !== 'all' ? activeTab : defaultValues.availability,
       });
-      setVariants([{ id: genId(), diameter: { mode: 'single', value: '' } }]);
+      setVariants([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
     }
   }, [isOpen, lens, reset, activeTab]);
 
   function addVariant() {
-    setVariants(prev => [...prev, { id: genId(), diameter: { mode: 'single', value: '' } }]);
+    setVariants(prev => [...prev, { id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
   }
 
   function removeVariant(id) {
     setVariants(prev => prev.filter(v => v.id !== id));
   }
 
-  function updateVariantDiameter(id, diameter) {
-    setVariants(prev => prev.map(v => v.id === id ? { ...v, diameter } : v));
+  function updateVariant(id, updates) {
+    setVariants(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
   }
 
   async function onSubmit(data) {
@@ -306,14 +306,18 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         if (!d) { toast.error('Each variant must have a diameter set'); return; }
         if (d.mode === 'single' && !d.value) { toast.error('Each variant must have a diameter selected'); return; }
         if (d.mode === 'range' && (!d.from || !d.to)) { toast.error('Each variant must have a complete diameter range'); return; }
+        if (v.sphMin === '' || v.sphMax === '') { toast.error('Each variant must have a SPH range'); return; }
+        if (v.cylMin === '' || v.cylMax === '') { toast.error('Each variant must have a CYL range'); return; }
+        if (!v.wholesalePrice) { toast.error('Each variant must have a wholesale price'); return; }
       }
+    } else {
+      if (!data.wholesalePrice) { toast.error('Wholesale price is required'); return; }
     }
 
     setLoading(true);
     try {
       const refractiveIndex = parseFloat(data.refractiveIndex);
-
-      const payload = {
+      const masterBase = {
         productName: data.productName,
         design: data.design,
         material: data.material,
@@ -323,11 +327,29 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         coating: data.coating || '',
         color: data.color || null,
         availability: data.availability,
-        cylFormat: data.cylFormat,
-        wholesalePrice: parseFloat(data.wholesalePrice),
-        retailPrice: data.retailPrice ? parseFloat(data.retailPrice) : null,
-        ...(data.availability === 'rx' ? { variants } : {}),
       };
+
+      const payload = data.availability === 'stock'
+        ? {
+            ...masterBase,
+            cylFormat: data.cylFormat,
+            wholesalePrice: parseFloat(data.wholesalePrice),
+            retailPrice: data.retailPrice ? parseFloat(data.retailPrice) : null,
+          }
+        : {
+            ...masterBase,
+            variants: variants.map(v => ({
+              id: v.id,
+              diameter: v.diameter,
+              sphMin: parseFloat(v.sphMin),
+              sphMax: parseFloat(v.sphMax),
+              cylMin: parseFloat(v.cylMin),
+              cylMax: parseFloat(v.cylMax),
+              cylFormat: v.cylFormat,
+              wholesalePrice: parseFloat(v.wholesalePrice),
+              retailPrice: v.retailPrice ? parseFloat(v.retailPrice) : null,
+            })),
+          };
 
       if (lens) {
         await updateIvlLens(supplierId, brandId, lens.id, payload);
@@ -505,33 +527,111 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               {variants.map((v, i) => (
                 <div
                   key={v.id}
-                  style={{
-                    border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px 16px',
-                    background: '#f8fafc',
-                  }}
+                  style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px 16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 14 }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  {/* Variant header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>Variant {i + 1}</span>
                     {variants.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeVariant(v.id)}
-                        style={{
-                          border: 'none', background: 'none', cursor: 'pointer',
-                          color: '#94a3b8', fontSize: 18, lineHeight: 1, padding: '2px 6px',
-                          borderRadius: 6,
-                        }}
+                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18, lineHeight: 1, padding: '2px 6px', borderRadius: 6 }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
-                      >
-                        ×
-                      </button>
+                      >×</button>
                     )}
                   </div>
+
+                  {/* Diameter */}
                   <DiameterInput
                     value={v.diameter}
-                    onChange={(diameter) => updateVariantDiameter(v.id, diameter)}
+                    onChange={diameter => updateVariant(v.id, { diameter })}
                   />
+
+                  {/* SPH range */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>SPH Range</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <Input
+                        label="Min"
+                        type="number"
+                        step="0.25"
+                        placeholder="e.g. −6.00"
+                        value={v.sphMin}
+                        onChange={e => updateVariant(v.id, { sphMin: e.target.value })}
+                      />
+                      <Input
+                        label="Max"
+                        type="number"
+                        step="0.25"
+                        placeholder="e.g. +4.00"
+                        value={v.sphMax}
+                        onChange={e => updateVariant(v.id, { sphMax: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CYL range */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>CYL Range</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <Input
+                        label="Min"
+                        type="number"
+                        step="0.25"
+                        placeholder="e.g. −4.00"
+                        value={v.cylMin}
+                        onChange={e => updateVariant(v.id, { cylMin: e.target.value })}
+                      />
+                      <Input
+                        label="Max"
+                        type="number"
+                        step="0.25"
+                        placeholder="e.g. 0.00"
+                        value={v.cylMax}
+                        onChange={e => updateVariant(v.id, { cylMax: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CYL Format */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>CYL Format</label>
+                    <ToggleGroup
+                      options={['plus', 'minus']}
+                      labels={CYL_FORMAT_LABELS}
+                      value={v.cylFormat}
+                      onChange={cylFormat => updateVariant(v.id, { cylFormat })}
+                    />
+                  </div>
+
+                  {/* Pricing */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Pricing</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <Input
+                        label="Wholesale *"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        prefix="€"
+                        placeholder="0.00"
+                        value={v.wholesalePrice}
+                        onChange={e => updateVariant(v.id, { wholesalePrice: e.target.value })}
+                      />
+                      <Input
+                        label="Retail (optional)"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        prefix="€"
+                        placeholder="0.00"
+                        value={v.retailPrice}
+                        onChange={e => updateVariant(v.id, { retailPrice: e.target.value })}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
               <button
@@ -553,49 +653,52 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
           </section>
         )}
 
-        {/* Format */}
-        <section>
-          <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Format</h3>
-          <div>
-            <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>CYL Format</label>
-            <Controller
-              name="cylFormat"
-              control={control}
-              render={({ field }) => (
-                <ToggleGroup
-                  options={['plus', 'minus']}
-                  labels={CYL_FORMAT_LABELS}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </div>
-        </section>
+        {/* Format — Stock only */}
+        {availability === 'stock' && (
+          <section>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Format</h3>
+            <div>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>CYL Format</label>
+              <Controller
+                name="cylFormat"
+                control={control}
+                render={({ field }) => (
+                  <ToggleGroup
+                    options={['plus', 'minus']}
+                    labels={CYL_FORMAT_LABELS}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </div>
+          </section>
+        )}
 
-        {/* Pricing */}
-        <section>
-          <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Pricing</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <Input
-              label="Wholesale Price *"
-              type="number"
-              step="0.01"
-              min="0.01"
-              prefix="€"
-              error={errors.wholesalePrice?.message}
-              {...register('wholesalePrice', { required: 'Wholesale price is required' })}
-            />
-            <Input
-              label="Retail Price (optional)"
-              type="number"
-              step="0.01"
-              min="0.01"
-              prefix="€"
-              {...register('retailPrice')}
-            />
-          </div>
-        </section>
+        {/* Pricing — Stock only */}
+        {availability === 'stock' && (
+          <section>
+            <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Pricing</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <Input
+                label="Wholesale Price *"
+                type="number"
+                step="0.01"
+                min="0.01"
+                prefix="€"
+                {...register('wholesalePrice')}
+              />
+              <Input
+                label="Retail Price (optional)"
+                type="number"
+                step="0.01"
+                min="0.01"
+                prefix="€"
+                {...register('retailPrice')}
+              />
+            </div>
+          </section>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 8, borderTop: '1px solid #e2e8f0' }}>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
