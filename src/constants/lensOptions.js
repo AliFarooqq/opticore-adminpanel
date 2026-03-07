@@ -29,7 +29,7 @@ export const LENS_SHAPES = ['spherical', 'toric'];
 
 export const COMMON_DIAMETERS = [60, 65, 70, 75, 80];
 
-export const IVL_DIAMETER_OPTIONS = ['55', '60', '65', '70', '75', '80', 'all'];
+export const IVL_DIAMETER_OPTIONS = ['50', '55', '60', '65', '70', '75', '80', 'all'];
 
 export const CYL_FORMATS = ['plus', 'minus'];
 

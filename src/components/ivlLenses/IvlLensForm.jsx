@@ -110,72 +110,59 @@ function BottomSheetSelector({ label, options, labels, value, onChange }) {
   );
 }
 
-// Multi-select bottom sheet for RX variant diameters
-function DiameterMultiSelect({ selected, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(selected);
+// Diameter input: Single or Range mode
+const DIAMETER_LABELS = Object.fromEntries(NUMERIC_DIAMETERS.map(d => [d, `${d} mm`]));
 
-  function openSheet() {
-    setDraft(selected);
-    setOpen(true);
+function DiameterInput({ value, onChange }) {
+  const mode = value?.mode || 'single';
+
+  function setMode(m) {
+    if (m === 'single') onChange({ mode: 'single', value: '' });
+    else onChange({ mode: 'range', from: '', to: '' });
   }
 
-  function toggle(d) {
-    setDraft(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
-  }
-
-  function done() {
-    onChange(draft);
-    setOpen(false);
-  }
-
-  const displayLabel = selected.length === 0
-    ? '— Select diameters'
-    : selected.map(d => `${d} mm`).join(', ');
+  const toOptions = mode === 'range' && value?.from
+    ? NUMERIC_DIAMETERS.filter(d => parseFloat(d) > parseFloat(value.from))
+    : NUMERIC_DIAMETERS;
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={openSheet}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          height: 44, padding: '0 14px',
-          borderRadius: 10, border: '1.5px solid #e2e8f0',
-          background: '#f8fafc', cursor: 'pointer',
-          fontSize: 14, color: selected.length === 0 ? '#94a3b8' : '#0f172a', fontWeight: 500,
-          textAlign: 'left', width: '100%',
-        }}
-      >
-        <span>{displayLabel}</span>
-        <span style={{ color: '#94a3b8', fontSize: 11 }}>▾</span>
-      </button>
-      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Select Diameters">
-        <div style={{ overflowY: 'auto' }}>
-          {NUMERIC_DIAMETERS.map(d => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => toggle(d)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '15px 20px', border: 'none', background: 'none', cursor: 'pointer',
-                fontSize: 14, textAlign: 'left',
-                color: draft.includes(d) ? '#1e3a5f' : '#374151',
-                fontWeight: draft.includes(d) ? 700 : 400,
-                borderBottom: '1px solid #f8fafc',
-              }}
-            >
-              <span>{d} mm</span>
-              {draft.includes(d) && <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>}
-            </button>
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <ToggleGroup
+        options={['single', 'range']}
+        labels={{ single: 'Single', range: 'Range' }}
+        value={mode}
+        onChange={setMode}
+      />
+      {mode === 'single' ? (
+        <BottomSheetSelector
+          label="Diameter"
+          options={NUMERIC_DIAMETERS}
+          labels={DIAMETER_LABELS}
+          value={value?.value || ''}
+          onChange={v => onChange({ mode: 'single', value: v })}
+        />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <BottomSheetSelector
+            label="From"
+            options={NUMERIC_DIAMETERS}
+            labels={DIAMETER_LABELS}
+            value={value?.from || ''}
+            onChange={v => {
+              const newTo = value?.to && parseFloat(value.to) > parseFloat(v) ? value.to : '';
+              onChange({ mode: 'range', from: v, to: newTo });
+            }}
+          />
+          <BottomSheetSelector
+            label="To"
+            options={toOptions}
+            labels={DIAMETER_LABELS}
+            value={value?.to || ''}
+            onChange={v => onChange({ mode: 'range', from: value?.from || '', to: v })}
+          />
         </div>
-        <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
-          <Button style={{ width: '100%' }} onClick={done}>Done</Button>
-        </div>
-      </BottomSheet>
-    </>
+      )}
+    </div>
   );
 }
 
@@ -261,7 +248,7 @@ const defaultValues = {
 export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
-  const [variants, setVariants] = useState([{ id: genId(), diameters: [] }]);
+  const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' } }]);
 
   const {
     register,
@@ -290,34 +277,35 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
-      setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameters: [] }]);
+      setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameter: { mode: 'single', value: '' } }]);
     } else {
       reset({
         ...defaultValues,
         availability: activeTab !== 'all' ? activeTab : defaultValues.availability,
       });
-      setVariants([{ id: genId(), diameters: [] }]);
+      setVariants([{ id: genId(), diameter: { mode: 'single', value: '' } }]);
     }
   }, [isOpen, lens, reset, activeTab]);
 
   function addVariant() {
-    setVariants(prev => [...prev, { id: genId(), diameters: [] }]);
+    setVariants(prev => [...prev, { id: genId(), diameter: { mode: 'single', value: '' } }]);
   }
 
   function removeVariant(id) {
     setVariants(prev => prev.filter(v => v.id !== id));
   }
 
-  function updateVariantDiameters(id, diameters) {
-    setVariants(prev => prev.map(v => v.id === id ? { ...v, diameters } : v));
+  function updateVariantDiameter(id, diameter) {
+    setVariants(prev => prev.map(v => v.id === id ? { ...v, diameter } : v));
   }
 
   async function onSubmit(data) {
     if (data.availability === 'rx') {
-      const emptyVariant = variants.find(v => v.diameters.length === 0);
-      if (emptyVariant) {
-        toast.error('Each variant must have at least one diameter selected');
-        return;
+      for (const v of variants) {
+        const d = v.diameter;
+        if (!d) { toast.error('Each variant must have a diameter set'); return; }
+        if (d.mode === 'single' && !d.value) { toast.error('Each variant must have a diameter selected'); return; }
+        if (d.mode === 'range' && (!d.from || !d.to)) { toast.error('Each variant must have a complete diameter range'); return; }
       }
     }
 
@@ -540,10 +528,9 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                       </button>
                     )}
                   </div>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 6 }}>Diameters</label>
-                  <DiameterMultiSelect
-                    selected={v.diameters}
-                    onChange={(diameters) => updateVariantDiameters(v.id, diameters)}
+                  <DiameterInput
+                    value={v.diameter}
+                    onChange={(diameter) => updateVariantDiameter(v.id, diameter)}
                   />
                 </div>
               ))}
