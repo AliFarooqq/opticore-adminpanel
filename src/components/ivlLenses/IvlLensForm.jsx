@@ -370,7 +370,16 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         {/* Product Type */}
         <div>
           <label style={{ fontSize: 14, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 8 }}>Product Type</label>
-          {!lens && activeTab !== 'all' ? (
+          {lens ? (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '8px 18px', borderRadius: 8,
+              background: '#1e3a5f', color: '#fff',
+              fontSize: 14, fontWeight: 600,
+            }}>
+              {lens.availability === 'stock' ? 'Stock' : 'RX'}
+            </div>
+          ) : activeTab !== 'all' ? (
             <div style={{
               display: 'inline-flex', alignItems: 'center',
               padding: '8px 18px', borderRadius: 8,
