@@ -24,6 +24,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
       name: supplier?.name || '',
       email: supplier?.email || '',
       phone: supplier?.phone || '',
+      website: supplier?.website || '',
     },
   });
 
@@ -33,6 +34,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
         name: supplier?.name || '',
         email: supplier?.email || '',
         phone: supplier?.phone || '',
+        website: supplier?.website || '',
       });
       setLogoFile(null);
       setLogoPreview(supplier?.logoUrl || '');
@@ -133,6 +135,13 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
           label="Phone"
           type="tel"
           {...register('phone')}
+        />
+
+        <Input
+          label="Website"
+          type="url"
+          placeholder="https://example.com"
+          {...register('website')}
         />
 
         <div className="flex justify-end gap-3 pt-2">
