@@ -52,16 +52,21 @@ const TD = {
   borderBottom: '1px solid #f1f5f9',
 };
 
-// ── Chip component for variant row ────────────────────────────────────────────
+// ── Variant sub-table styles ──────────────────────────────────────────────────
 
-function Chip({ label, value }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <span style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', background: '#e2e8f0', borderRadius: 5, padding: '2px 7px' }}>{value}</span>
-    </div>
-  );
-}
+const VTH = {
+  textAlign: 'left', padding: '7px 14px',
+  fontSize: 10, fontWeight: 700, color: '#94a3b8',
+  textTransform: 'uppercase', letterSpacing: '0.07em',
+  whiteSpace: 'nowrap', background: '#eef2f7',
+  borderBottom: '1px solid #dde3ee',
+};
+
+const VTD = {
+  padding: '8px 14px', color: '#374151', fontSize: 12,
+  verticalAlign: 'middle', whiteSpace: 'nowrap',
+  borderBottom: '1px solid #e8ecf2',
+};
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -186,7 +191,6 @@ export default function IvlLensesPage() {
                     <th style={TH}>Coating</th>
                     <th style={TH}>Color</th>
                     <th style={TH}>Availability</th>
-                    <th style={TH}>Wholesale</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -242,9 +246,6 @@ export default function IvlLensesPage() {
                           <td style={TD}>
                             <Badge variant={isRx ? 'blue' : 'green'}>{isRx ? 'RX' : 'Stock'}</Badge>
                           </td>
-                          <td style={TD}>
-                            {isRx ? '—' : l.wholesalePrice != null ? `€${l.wholesalePrice.toFixed(2)}` : '—'}
-                          </td>
 
                           {/* Actions */}
                           <td style={{ ...TD, textAlign: 'right' }}>
@@ -275,38 +276,42 @@ export default function IvlLensesPage() {
                           </td>
                         </tr>
 
-                        {/* Variant rows — RX expanded */}
-                        {isRx && expanded && (l.variants || []).map((v, vi) => (
-                          <tr
-                            key={v.id || vi}
-                            style={{ background: '#f8fafc', transition: 'background 0.1s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; }}
-                          >
+                        {/* Variant sub-table — RX expanded */}
+                        {isRx && expanded && (
+                          <tr key={`${l.id}-variants`}>
                             {/* Indent */}
-                            <td style={{ ...TD, padding: '10px 8px 10px 20px', borderLeft: '3px solid #dde3ee' }} />
-
-                            {/* Variant data — colSpan 10 */}
-                            <td colSpan={10} style={{ ...TD, padding: '10px 14px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: 60 }}>
-                                  Variant {vi + 1}
-                                </span>
-                                <Chip label="Ø" value={formatDiameter(v.diameter)} />
-                                <Chip label="SPH" value={formatRange(v.sphMin, v.sphMax)} />
-                                <Chip label="CYL" value={formatRange(v.cylMin, v.cylMax)} />
-                                <Chip label="Fmt" value={CYL_FORMAT_LABELS[v.cylFormat] || v.cylFormat || '—'} />
-                                <Chip label="Wholesale" value={v.wholesalePrice != null ? `€${parseFloat(v.wholesalePrice).toFixed(2)}` : '—'} />
-                                {v.retailPrice != null && (
-                                  <Chip label="Retail" value={`€${parseFloat(v.retailPrice).toFixed(2)}`} />
-                                )}
-                              </div>
+                            <td style={{ borderLeft: '3px solid #dde3ee', borderBottom: '1px solid #f1f5f9' }} />
+                            {/* Sub-table spanning remaining columns */}
+                            <td colSpan={10} style={{ padding: '0 0 12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                  <tr>
+                                    <th style={VTH}>Variant</th>
+                                    <th style={VTH}>Diameter</th>
+                                    <th style={VTH}>SPH</th>
+                                    <th style={VTH}>CYL</th>
+                                    <th style={VTH}>CYL Format</th>
+                                    <th style={VTH}>Wholesale</th>
+                                    <th style={VTH}>Retail</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(l.variants || []).map((v, vi) => (
+                                    <tr key={v.id || vi}>
+                                      <td style={VTD}>{vi + 1}</td>
+                                      <td style={VTD}>{formatDiameter(v.diameter)}</td>
+                                      <td style={VTD}>{formatRange(v.sphMin, v.sphMax)}</td>
+                                      <td style={VTD}>{formatRange(v.cylMin, v.cylMax)}</td>
+                                      <td style={VTD}>{CYL_FORMAT_LABELS[v.cylFormat] || v.cylFormat || '—'}</td>
+                                      <td style={VTD}>{v.wholesalePrice != null ? `€${parseFloat(v.wholesalePrice).toFixed(2)}` : '—'}</td>
+                                      <td style={VTD}>{v.retailPrice != null ? `€${parseFloat(v.retailPrice).toFixed(2)}` : '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </td>
-
-                            {/* Empty actions */}
-                            <td style={TD} />
                           </tr>
-                        ))}
+                        )}
                       </Fragment>
                     );
                   })}
