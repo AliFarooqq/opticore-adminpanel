@@ -64,7 +64,7 @@ function BottomSheet({ isOpen, onClose, title, children }) {
 }
 
 // Single-select bottom sheet selector
-function BottomSheetSelector({ label, options, labels, value, onChange }) {
+function BottomSheetSelector({ label, options, labels, value, onChange, error }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -75,15 +75,16 @@ function BottomSheetSelector({ label, options, labels, value, onChange }) {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: 44, padding: '0 14px',
-          borderRadius: 10, border: '1.5px solid #e2e8f0',
+          borderRadius: 10, border: error ? '1.5px solid #ef4444' : '1.5px solid #e2e8f0',
           background: '#f8fafc', cursor: 'pointer',
-          fontSize: 14, color: '#0f172a', fontWeight: 500,
+          fontSize: 14, color: value ? '#0f172a' : '#94a3b8', fontWeight: 500,
           textAlign: 'left', width: '100%',
         }}
       >
-        <span>{labels?.[value] || value || '—'}</span>
+        <span>{labels?.[value] || value || 'Select…'}</span>
         <span style={{ color: '#94a3b8', fontSize: 11 }}>▾</span>
       </button>
+      {error && <p style={{ fontSize: 12, color: '#ef4444', margin: '2px 0 0' }}>{error}</p>}
       <BottomSheet isOpen={open} onClose={() => setOpen(false)} title={label}>
         {options.map(opt => (
           <button
@@ -233,11 +234,11 @@ function ToggleGroup({ options, labels, value, onChange }) {
 const defaultValues = {
   availability: 'stock',
   productName: '',
-  design: 'single_vision',
-  material: 'plastic',
-  lensTypes: 'clear',
-  refractiveIndex: '1.60',
-  geometry: 'sph',
+  design: '',
+  material: '',
+  lensTypes: '',
+  refractiveIndex: '',
+  geometry: '',
   coating: '',
   color: '',
   cylFormat: 'minus',
@@ -257,6 +258,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
     watch,
     reset,
     setValue,
+    setError,
     formState: { errors },
   } = useForm({ defaultValues });
 
@@ -300,6 +302,10 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
   }
 
   async function onSubmit(data) {
+    if (!data.refractiveIndex) {
+      setError('refractiveIndex', { message: 'Refractive index is required' });
+      return;
+    }
     if (data.availability === 'rx') {
       for (const v of variants) {
         const d = v.diameter;
@@ -308,10 +314,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         if (d.mode === 'range' && (!d.from || !d.to)) { toast.error('Each variant must have a complete diameter range'); return; }
         if (v.sphMin === '' || v.sphMax === '') { toast.error('Each variant must have a SPH range'); return; }
         if (v.cylMin === '' || v.cylMax === '') { toast.error('Each variant must have a CYL range'); return; }
-        if (!v.wholesalePrice) { toast.error('Each variant must have a wholesale price'); return; }
       }
-    } else {
-      if (!data.wholesalePrice) { toast.error('Wholesale price is required'); return; }
     }
 
     setLoading(true);
@@ -333,7 +336,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         ? {
             ...masterBase,
             cylFormat: data.cylFormat,
-            wholesalePrice: parseFloat(data.wholesalePrice),
+            wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : null,
             retailPrice: data.retailPrice ? parseFloat(data.retailPrice) : null,
           }
         : {
@@ -346,7 +349,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               cylMin: parseFloat(v.cylMin),
               cylMax: parseFloat(v.cylMax),
               cylFormat: v.cylFormat,
-              wholesalePrice: parseFloat(v.wholesalePrice),
+              wholesalePrice: v.wholesalePrice ? parseFloat(v.wholesalePrice) : null,
               retailPrice: v.retailPrice ? parseFloat(v.retailPrice) : null,
             })),
           };
@@ -369,12 +372,18 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
 
   const availability = watch('availability');
   const material = watch('material');
-  const availableIndices = REFRACTIVE_INDICES_BY_MATERIAL[material] || REFRACTIVE_INDICES_BY_MATERIAL.plastic;
+  const availableIndices = REFRACTIVE_INDICES_BY_MATERIAL[material] || [];
 
   useEffect(() => {
-    const current = watch('refractiveIndex');
-    if (!availableIndices.map(String).includes(current)) {
-      setValue('refractiveIndex', String(availableIndices[0]));
+    if (!material) return;
+    const available = REFRACTIVE_INDICES_BY_MATERIAL[material] || [];
+    if (available.length === 1) {
+      setValue('refractiveIndex', String(available[0]));
+    } else {
+      const current = watch('refractiveIndex');
+      if (!available.map(String).includes(current)) {
+        setValue('refractiveIndex', '');
+      }
     }
   }, [material]);
 
@@ -436,13 +445,15 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Controller
               name="design"
               control={control}
+              rules={{ required: 'Design is required' }}
               render={({ field }) => (
                 <BottomSheetSelector
-                  label="Design"
+                  label="Design *"
                   options={DESIGNS}
                   labels={DESIGN_LABELS}
                   value={field.value}
                   onChange={field.onChange}
+                  error={errors.design?.message}
                 />
               )}
             />
@@ -450,13 +461,15 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Controller
               name="material"
               control={control}
+              rules={{ required: 'Material is required' }}
               render={({ field }) => (
                 <BottomSheetSelector
-                  label="Material"
+                  label="Material *"
                   options={MATERIALS}
                   labels={MATERIAL_LABELS}
                   value={field.value}
                   onChange={field.onChange}
+                  error={errors.material?.message}
                 />
               )}
             />
@@ -470,55 +483,68 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Controller
               name="lensTypes"
               control={control}
+              rules={{ required: 'Lens type is required' }}
               render={({ field }) => (
                 <BottomSheetSelector
-                  label="Lens Type"
+                  label="Lens Type *"
                   options={LENS_TYPES}
                   labels={LENS_TYPE_LABELS}
                   value={field.value}
                   onChange={field.onChange}
+                  error={errors.lensTypes?.message}
                 />
               )}
             />
 
             {/* Refractive Index */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Refractive Index</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {availableIndices.map(idx => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setValue('refractiveIndex', String(idx))}
-                    style={{
-                      padding: '7px 14px',
-                      borderRadius: 8,
-                      border: watch('refractiveIndex') === String(idx) ? '1.5px solid #1e3a5f' : '1.5px solid #cbd5e1',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      background: watch('refractiveIndex') === String(idx) ? '#1e3a5f' : '#fff',
-                      color: watch('refractiveIndex') === String(idx) ? '#fff' : '#475569',
-                      transition: 'background 0.15s, color 0.15s',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {idx.toFixed(2)}
-                  </button>
-                ))}
-              </div>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Refractive Index *</label>
+              {availableIndices.length === 0 ? (
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: errors.refractiveIndex ? '1.5px solid #ef4444' : '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                  Select a material first
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {availableIndices.map(idx => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => { setValue('refractiveIndex', String(idx)); setError('refractiveIndex', {}); }}
+                      style={{
+                        padding: '7px 14px',
+                        borderRadius: 8,
+                        border: watch('refractiveIndex') === String(idx) ? '1.5px solid #1e3a5f' : '1.5px solid #cbd5e1',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        background: watch('refractiveIndex') === String(idx) ? '#1e3a5f' : '#fff',
+                        color: watch('refractiveIndex') === String(idx) ? '#fff' : '#475569',
+                        transition: 'background 0.15s, color 0.15s',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {idx.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {errors.refractiveIndex?.message && (
+                <p style={{ fontSize: 12, color: '#ef4444', margin: '2px 0 0' }}>{errors.refractiveIndex.message}</p>
+              )}
             </div>
 
             <Controller
               name="geometry"
               control={control}
+              rules={{ required: 'Geometry is required' }}
               render={({ field }) => (
                 <RadioGroup
-                  label="Geometry"
+                  label="Geometry *"
                   options={GEOMETRIES}
                   labels={GEOMETRY_LABELS}
                   value={field.value}
                   onChange={field.onChange}
+                  error={errors.geometry?.message}
                 />
               )}
             />
@@ -526,20 +552,22 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <Controller
               name="coating"
               control={control}
+              rules={{ required: brandCoatings.length > 0 ? 'Coating is required' : false }}
               render={({ field }) => (
                 brandCoatings.length > 0 ? (
                   <BottomSheetSelector
-                    label="Coating"
+                    label="Coating *"
                     options={brandCoatings}
                     labels={Object.fromEntries(brandCoatings.map(c => [c, c]))}
                     value={field.value}
                     onChange={field.onChange}
+                    error={errors.coating?.message}
                   />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Coating</label>
                     <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
-                      No coatings configured — add them via the Tag icon on the brand
+                      No coatings configured — add them via Brand Metadata
                     </div>
                   </div>
                 )
@@ -562,7 +590,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Color (optional)</label>
                     <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
-                      No colors configured — add them via the Tag icon on the brand
+                      No colors configured — add them via Brand Metadata
                     </div>
                   </div>
                 )
