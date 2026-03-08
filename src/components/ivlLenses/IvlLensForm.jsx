@@ -114,7 +114,7 @@ function BottomSheetSelector({ label, options, labels, value, onChange, error })
 // Diameter input: Single or Range mode
 const DIAMETER_LABELS = Object.fromEntries(NUMERIC_DIAMETERS.map(d => [d, `${d} mm`]));
 
-function DiameterInput({ value, onChange }) {
+function DiameterInput({ value, onChange, error }) {
   const mode = value?.mode || 'single';
 
   function setMode(m) {
@@ -126,8 +126,12 @@ function DiameterInput({ value, onChange }) {
     ? NUMERIC_DIAMETERS.filter(d => parseFloat(d) > parseFloat(value.from))
     : NUMERIC_DIAMETERS;
 
+  const fromError = error && !value?.from ? error : undefined;
+  const toError = error && value?.from && !value?.to ? error : undefined;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Diameter *</label>
       <ToggleGroup
         options={['single', 'range']}
         labels={{ single: 'Single', range: 'Range' }}
@@ -136,11 +140,12 @@ function DiameterInput({ value, onChange }) {
       />
       {mode === 'single' ? (
         <BottomSheetSelector
-          label="Diameter"
+          label=""
           options={NUMERIC_DIAMETERS}
           labels={DIAMETER_LABELS}
           value={value?.value || ''}
           onChange={v => onChange({ mode: 'single', value: v })}
+          error={error}
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -153,6 +158,7 @@ function DiameterInput({ value, onChange }) {
               const newTo = value?.to && parseFloat(value.to) > parseFloat(v) ? value.to : '';
               onChange({ mode: 'range', from: v, to: newTo });
             }}
+            error={fromError}
           />
           <BottomSheetSelector
             label="To"
@@ -160,6 +166,7 @@ function DiameterInput({ value, onChange }) {
             labels={DIAMETER_LABELS}
             value={value?.to || ''}
             onChange={v => onChange({ mode: 'range', from: value?.from || '', to: v })}
+            error={toError}
           />
         </div>
       )}
@@ -250,6 +257,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
+  const [variantErrors, setVariantErrors] = useState({});
 
   const {
     register,
@@ -265,6 +273,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
 
   useEffect(() => {
     if (!isOpen) return;
+    setVariantErrors({});
     if (lens) {
       reset({
         productName: lens.productName || '',
@@ -300,6 +309,13 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
 
   function updateVariant(id, updates) {
     setVariants(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
+    if (updates.diameter !== undefined) {
+      setVariantErrors(prev => {
+        const ve = { ...prev };
+        if (ve[id]) ve[id] = { ...ve[id], diameter: undefined };
+        return ve;
+      });
+    }
   }
 
   async function onSubmit(data) {
@@ -308,14 +324,21 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
       return;
     }
     if (data.availability === 'rx') {
+      const newVariantErrors = {};
+      let hasError = false;
       for (const v of variants) {
         const d = v.diameter;
-        if (!d) { toast.error('Each variant must have a diameter set'); return; }
-        if (d.mode === 'single' && !d.value) { toast.error('Each variant must have a diameter selected'); return; }
-        if (d.mode === 'range' && (!d.from || !d.to)) { toast.error('Each variant must have a complete diameter range'); return; }
-        if (v.sphMin === '' || v.sphMax === '') { toast.error('Each variant must have a SPH range'); return; }
-        if (v.cylMin === '' || v.cylMax === '') { toast.error('Each variant must have a CYL range'); return; }
+        const vErrors = {};
+        if (!d || (d.mode === 'single' && !d.value) || (d.mode === 'range' && (!d.from || !d.to))) {
+          vErrors.diameter = 'Diameter is required';
+          hasError = true;
+        }
+        newVariantErrors[v.id] = vErrors;
+        if (v.sphMin === '' || v.sphMax === '') { toast.error('Each variant must have a SPH range'); hasError = true; }
+        if (v.cylMin === '' || v.cylMax === '') { toast.error('Each variant must have a CYL range'); hasError = true; }
       }
+      setVariantErrors(newVariantErrors);
+      if (hasError) return;
     }
 
     setLoading(true);
@@ -628,6 +651,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                   <DiameterInput
                     value={v.diameter}
                     onChange={diameter => updateVariant(v.id, { diameter })}
+                    error={variantErrors[v.id]?.diameter}
                   />
 
                   {/* SPH range */}
