@@ -165,7 +165,7 @@ export default function BrandMetaPage({ supplierType }) {
     <>
       <Header title={brand ? `${brand.name} — Metadata` : 'Brand Metadata'} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div className="page-content" style={{ maxWidth: 1000, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
 
           {/* Breadcrumb */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748b', marginBottom: 24, flexWrap: 'wrap' }}>
@@ -209,7 +209,7 @@ export default function BrandMetaPage({ supplierType }) {
           </div>
 
           {/* Save */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 28, gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 48, paddingTop: 24, borderTop: '1px solid #e2e8f0', gap: 12 }}>
             {dirty && (
               <span style={{ fontSize: 13, color: '#f59e0b', alignSelf: 'center', fontWeight: 500 }}>
                 Unsaved changes
