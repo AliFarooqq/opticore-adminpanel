@@ -4,6 +4,7 @@ import { functions } from './firebase';
 const _getBrands = httpsCallable(functions, 'getBrands');
 const _createBrand = httpsCallable(functions, 'createBrand');
 const _updateBrand = httpsCallable(functions, 'updateBrand');
+const _updateBrandMeta = httpsCallable(functions, 'updateBrandMeta');
 const _deleteBrand = httpsCallable(functions, 'deleteBrand');
 
 export async function getBrands(supplierId) {
@@ -18,6 +19,10 @@ export async function createBrand(supplierId, name) {
 
 export async function updateBrand(supplierId, brandId, name) {
   await _updateBrand({ supplierId, brandId, name });
+}
+
+export async function updateBrandMeta(brandId, { coatings, colors }) {
+  await _updateBrandMeta({ brandId, coatings, colors });
 }
 
 export async function deleteBrand(supplierId, brandId) {

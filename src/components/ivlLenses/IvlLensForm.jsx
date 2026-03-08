@@ -245,7 +245,7 @@ const defaultValues = {
   retailPrice: '',
 };
 
-export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all' }) {
+export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandColors = [] }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
@@ -523,8 +523,51 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               )}
             />
 
-            <Input label="Coating" {...register('coating')} />
-            <Input label="Color (optional)" {...register('color')} />
+            <Controller
+              name="coating"
+              control={control}
+              render={({ field }) => (
+                brandCoatings.length > 0 ? (
+                  <BottomSheetSelector
+                    label="Coating"
+                    options={brandCoatings}
+                    labels={Object.fromEntries(brandCoatings.map(c => [c, c]))}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Coating</label>
+                    <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                      No coatings configured — add them via the Tag icon on the brand
+                    </div>
+                  </div>
+                )
+              )}
+            />
+
+            <Controller
+              name="color"
+              control={control}
+              render={({ field }) => (
+                brandColors.length > 0 ? (
+                  <BottomSheetSelector
+                    label="Color (optional)"
+                    options={['', ...brandColors]}
+                    labels={{ '': 'None', ...Object.fromEntries(brandColors.map(c => [c, c])) }}
+                    value={field.value || ''}
+                    onChange={v => field.onChange(v || null)}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Color (optional)</label>
+                    <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                      No colors configured — add them via the Tag icon on the brand
+                    </div>
+                  </div>
+                )
+              )}
+            />
           </div>
         </section>
 

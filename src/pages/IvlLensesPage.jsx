@@ -335,6 +335,8 @@ export default function IvlLensesPage() {
         lens={editTarget}
         onSaved={reload}
         activeTab={filter}
+        brandCoatings={brand?.coatings || []}
+        brandColors={brand?.colors || []}
       />
 
       <ConfirmDialog
