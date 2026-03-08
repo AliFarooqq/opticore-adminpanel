@@ -259,6 +259,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
     reset,
     setValue,
     setError,
+    clearErrors,
     formState: { errors },
   } = useForm({ defaultValues });
 
@@ -509,7 +510,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => { setValue('refractiveIndex', String(idx)); setError('refractiveIndex', {}); }}
+                      onClick={() => { setValue('refractiveIndex', String(idx)); clearErrors('refractiveIndex'); }}
                       style={{
                         padding: '7px 14px',
                         borderRadius: 8,
