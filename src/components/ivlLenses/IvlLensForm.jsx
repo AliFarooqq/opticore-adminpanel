@@ -692,7 +692,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                     <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Pricing</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <Input
-                        label="Wholesale *"
+                        label="Wholesale (optional)"
                         type="number"
                         step="0.01"
                         min="0.01"
@@ -762,7 +762,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <h3 style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Pricing</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <Input
-                label="Wholesale Price *"
+                label="Wholesale Price (optional)"
                 type="number"
                 step="0.01"
                 min="0.01"
