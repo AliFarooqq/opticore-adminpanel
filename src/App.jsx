@@ -10,6 +10,7 @@ import IvlLensesPage from './pages/IvlLensesPage';
 import ContactLensesPage from './pages/ContactLensesPage';
 import GridEditorPage from './pages/GridEditorPage';
 import ImportPage from './pages/ImportPage';
+import BrandMetaPage from './pages/BrandMetaPage';
 
 export default function App() {
   return (
@@ -32,11 +33,13 @@ export default function App() {
                 <Route path="/ivl-suppliers" element={<SuppliersPage supplierType="ivl" />} />
                 <Route path="/ivl-suppliers/:supplierId/brands" element={<BrandsPage supplierType="ivl" />} />
                 <Route path="/ivl-suppliers/:supplierId/brands/:brandId/ivl" element={<IvlLensesPage />} />
+                <Route path="/ivl-suppliers/:supplierId/brands/:brandId/metadata" element={<BrandMetaPage supplierType="ivl" />} />
 
                 {/* Contact Suppliers */}
                 <Route path="/contact-suppliers" element={<SuppliersPage supplierType="contact" />} />
                 <Route path="/contact-suppliers/:supplierId/brands" element={<BrandsPage supplierType="contact" />} />
                 <Route path="/contact-suppliers/:supplierId/brands/:brandId/contact" element={<ContactLensesPage />} />
+                <Route path="/contact-suppliers/:supplierId/brands/:brandId/metadata" element={<BrandMetaPage supplierType="contact" />} />
 
                 <Route path="/import" element={<ImportPage />} />
               </Route>

@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Pencil, Trash2, Plus, ChevronRight, Tag } from 'lucide-react';
+import { Pencil, Trash2, Plus, ChevronRight } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import BrandForm from '../components/brands/BrandForm';
-import BrandMetaForm from '../components/brands/BrandMetaForm';
 import { getBrands, deleteBrand } from '../services/brandsService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSupplier } from '../services/contactSuppliersService';
@@ -33,7 +32,6 @@ export default function BrandsPage({ supplierType }) {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [metaTarget, setMetaTarget] = useState(null);
 
   function openAdd() {
     setEditTarget(null);
@@ -76,15 +74,9 @@ export default function BrandsPage({ supplierType }) {
               Products <ChevronRight size={14} />
             </Button>
           )}
-          <button
-            onClick={() => setMetaTarget(b)}
-            title="Coatings & Colors"
-            style={{ padding: 7, borderRadius: 7, border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.color = '#1e3a5f'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
-          >
-            <Tag size={15} />
-          </button>
+          <Button size="sm" variant="ghost" onClick={() => navigate(`${basePath}/${supplierId}/brands/${b.id}/metadata`)}>
+            Brand Metadata
+          </Button>
           <button
             onClick={() => openEdit(b)}
             style={{ padding: 7, borderRadius: 7, border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
@@ -148,12 +140,6 @@ export default function BrandsPage({ supplierType }) {
         onSaved={reload}
       />
 
-      <BrandMetaForm
-        isOpen={!!metaTarget}
-        onClose={() => setMetaTarget(null)}
-        brand={metaTarget}
-        onSaved={reload}
-      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}
