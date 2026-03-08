@@ -126,19 +126,21 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
         </div>
 
         <Input
-          label="Email"
+          label="Email *"
           type="email"
-          {...register('email')}
+          error={errors.email?.message}
+          {...register('email', { required: 'Email is required' })}
         />
 
         <Input
-          label="Phone"
+          label="Phone *"
           type="tel"
-          {...register('phone')}
+          error={errors.phone?.message}
+          {...register('phone', { required: 'Phone is required' })}
         />
 
         <Input
-          label="Website"
+          label="Website (optional)"
           type="url"
           placeholder="https://example.com"
           {...register('website')}
