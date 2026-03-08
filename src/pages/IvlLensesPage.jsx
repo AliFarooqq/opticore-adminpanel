@@ -176,7 +176,11 @@ export default function IvlLensesPage() {
             {loading ? (
               <Spinner />
             ) : filteredLenses.length === 0 ? (
-              <EmptyState title="No IVL lenses yet. Click Add IVL Lens to get started." />
+              <EmptyState title={
+                filter === 'stock' ? 'No Stock IVL lenses found. Switch to All or add a Stock lens.' :
+                filter === 'rx'    ? 'No RX IVL lenses found. Switch to All or add an RX lens.' :
+                                     'No IVL lenses yet. Click Add IVL Lens to get started.'
+              } />
             ) : (
               <table style={{ width: '100%', minWidth: 1200, borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
