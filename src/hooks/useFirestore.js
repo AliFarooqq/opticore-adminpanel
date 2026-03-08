@@ -27,7 +27,7 @@ export function useFirestoreCollection(fetchFn, deps = []) {
     load();
   }, [load]);
 
-  return { data, loading, error, reload: load };
+  return { data, loading, error, reload: load, setData };
 }
 
 /**

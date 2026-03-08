@@ -79,7 +79,7 @@ export default function IvlLensesPage() {
   const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
   const brand = brands.find(b => b.id === brandId);
 
-  const { data: lenses, loading, reload } = useFirestoreCollection(
+  const { data: lenses, loading, reload, setData: setLenses } = useFirestoreCollection(
     () => getIvlLenses(supplierId, brandId),
     [supplierId, brandId]
   );
@@ -113,8 +113,8 @@ export default function IvlLensesPage() {
     setDeleting(true);
     try {
       await deleteIvlLens(supplierId, brandId, deleteTarget.id);
+      setLenses(prev => prev.filter(l => l.id !== deleteTarget.id));
       toast.success(`"${deleteTarget.productName}" deleted`);
-      reload();
     } catch (err) {
       toast.error(err.message || 'Failed to delete lens');
     } finally {
