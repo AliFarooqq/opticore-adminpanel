@@ -9,7 +9,7 @@ import {
   MATERIALS, MATERIAL_LABELS,
   LENS_TYPES, LENS_TYPE_LABELS,
   GEOMETRIES, GEOMETRY_LABELS,
-  REFRACTIVE_INDICES,
+  REFRACTIVE_INDICES_BY_MATERIAL,
   CYL_FORMAT_LABELS,
   IVL_DIAMETER_OPTIONS,
 } from '../../constants/lensOptions';
@@ -368,6 +368,15 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
   }
 
   const availability = watch('availability');
+  const material = watch('material');
+  const availableIndices = REFRACTIVE_INDICES_BY_MATERIAL[material] || REFRACTIVE_INDICES_BY_MATERIAL.plastic;
+
+  useEffect(() => {
+    const current = watch('refractiveIndex');
+    if (!availableIndices.map(String).includes(current)) {
+      setValue('refractiveIndex', String(availableIndices[0]));
+    }
+  }, [material]);
 
   return (
     <Modal
@@ -476,7 +485,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Refractive Index</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {REFRACTIVE_INDICES.map(idx => (
+                {availableIndices.map(idx => (
                   <button
                     key={idx}
                     type="button"
