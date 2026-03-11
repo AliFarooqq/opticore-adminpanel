@@ -182,7 +182,7 @@ export default function IvlLensesPage() {
                                      'No IVL lenses found. Click Add IVL Lens to get started.'
               } />
             ) : (
-              <table style={{ width: '100%', minWidth: 1200, borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', minWidth: 1380, borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
                     <th style={{ ...TH, width: 36, padding: '12px 8px 12px 16px' }} />
@@ -194,6 +194,8 @@ export default function IvlLensesPage() {
                     <th style={TH}>Geometry</th>
                     <th style={TH}>Coating</th>
                     <th style={TH}>Color</th>
+                    <th style={TH}>Wholesale</th>
+                    <th style={TH}>Retail</th>
                     <th style={TH}>Availability</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -248,6 +250,12 @@ export default function IvlLensesPage() {
                           <td style={TD}>{l.coating || '—'}</td>
                           <td style={TD}>{l.color || '—'}</td>
                           <td style={TD}>
+                            {isRx ? '—' : l.wholesalePrice != null ? `€${parseFloat(l.wholesalePrice).toFixed(2)}` : '—'}
+                          </td>
+                          <td style={TD}>
+                            {isRx ? '—' : l.retailPrice != null ? `€${parseFloat(l.retailPrice).toFixed(2)}` : '—'}
+                          </td>
+                          <td style={TD}>
                             <Badge variant={isRx ? 'blue' : 'green'}>{isRx ? 'RX' : 'Stock'}</Badge>
                           </td>
 
@@ -286,7 +294,7 @@ export default function IvlLensesPage() {
                             {/* Indent */}
                             <td style={{ borderLeft: '3px solid #dde3ee', borderBottom: '1px solid #f1f5f9' }} />
                             {/* Sub-table spanning remaining columns */}
-                            <td colSpan={10} style={{ padding: '0 0 12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <td colSpan={12} style={{ padding: '0 0 12px 0', borderBottom: '1px solid #f1f5f9' }}>
                               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                   <tr>

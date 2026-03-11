@@ -12,8 +12,8 @@ export default function ConfirmDialog({
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <p className="text-slate-600 text-sm mb-6">{message}</p>
-      <div className="flex justify-end gap-3">
+      <p style={{ fontSize: 14, color: '#475569', marginBottom: 24 }}>{message}</p>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
