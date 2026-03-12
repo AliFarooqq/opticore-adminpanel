@@ -7,7 +7,7 @@ import { SidebarContext } from './Layout';
 const navItems = [
   { to: '/ivl-suppliers', label: 'IVL Suppliers', icon: Building2 },
   { to: '/contact-suppliers', label: 'Contact Suppliers', icon: Building2 },
-  // { to: '/import', label: 'Bulk Import', icon: Upload },
+  { to: '/import', label: 'Bulk Import', icon: Upload },
 ];
 
 export default function Sidebar() {

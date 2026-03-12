@@ -20,8 +20,7 @@ function StepHeader({ number, title }) {
   );
 }
 import { downloadIvlTemplate, downloadContactTemplate } from '../utils/csvTemplates';
-// Bulk import wired up but hidden from client until ready
-// import { parseFile, validateRows, importValidRows } from '../services/importParser';
+import { parseFile, validateRows, importValidRows } from '../services/importParser';
 import { useToast } from '../hooks/useToast';
 
 function DropZone({ onFile, file }) {
@@ -130,37 +129,35 @@ function ImportTab({ type }) {
   const isIvl = type === 'ivl';
 
   async function handleValidate() {
-    // Bulk import wired up but hidden from client until ready
-    // if (!file) return;
-    // setValidating(true);
-    // setValidatedRows(null);
-    // try {
-    //   const rows = await parseFile(file);
-    //   const results = await validateRows(rows, type);
-    //   setValidatedRows(results);
-    // } catch (err) {
-    //   toast.error(err.message || 'Failed to parse file');
-    // } finally {
-    //   setValidating(false);
-    // }
+    if (!file) return;
+    setValidating(true);
+    setValidatedRows(null);
+    try {
+      const rows = await parseFile(file);
+      const results = await validateRows(rows, type);
+      setValidatedRows(results);
+    } catch (err) {
+      toast.error(err.message || 'Failed to parse file');
+    } finally {
+      setValidating(false);
+    }
   }
 
   async function handleImport() {
-    // Bulk import wired up but hidden from client until ready
-    // if (!validatedRows) return;
-    // setImporting(true);
-    // setImportProgress({ current: 0, total: validatedRows.filter(r => r.valid).length });
-    // try {
-    //   const count = await importValidRows(validatedRows, type);
-    //   toast.success(`Successfully imported ${count} ${isIvl ? 'IVL' : 'contact'} lens${count !== 1 ? 'es' : ''}`);
-    //   setFile(null);
-    //   setValidatedRows(null);
-    //   setImportProgress(null);
-    // } catch (err) {
-    //   toast.error(err.message || 'Import failed');
-    // } finally {
-    //   setImporting(false);
-    // }
+    if (!validatedRows) return;
+    setImporting(true);
+    setImportProgress({ current: 0, total: validatedRows.filter(r => r.valid).length });
+    try {
+      const count = await importValidRows(validatedRows, type);
+      toast.success(`Successfully imported ${count} ${isIvl ? 'IVL' : 'contact'} lens${count !== 1 ? 'es' : ''}`);
+      setFile(null);
+      setValidatedRows(null);
+      setImportProgress(null);
+    } catch (err) {
+      toast.error(err.message || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
   }
 
   const validCount = validatedRows?.filter(r => r.valid).length || 0;
