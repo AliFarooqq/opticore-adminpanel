@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { updateBrandMeta } from '../../services/brandsService';
 import { useToast } from '../../hooks/useToast';
 
-function MetaList({ title, items, onAdd, onRemove, saving }) {
+function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
   const [input, setInput] = useState('');
 
   function handleAdd() {
@@ -26,16 +26,51 @@ function MetaList({ title, items, onAdd, onRemove, saving }) {
         {items.length === 0 ? (
           <p style={{ fontSize: 13, color: '#cbd5e1', margin: 0 }}>No {title.toLowerCase()} added yet.</p>
         ) : (
-          items.map(item => (
+          items.map((item, index) => (
             <div
               key={item}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                display: 'flex', alignItems: 'center', gap: 4,
                 padding: '8px 12px', borderRadius: 8,
                 background: '#f8fafc', border: '1px solid #e2e8f0',
               }}
             >
-              <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{item}</span>
+              {/* Reorder arrows */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginRight: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => onMove(index, 'up')}
+                  disabled={saving || index === 0}
+                  style={{
+                    border: 'none', background: 'none', padding: 3, borderRadius: 4,
+                    cursor: index === 0 || saving ? 'default' : 'pointer',
+                    color: '#94a3b8', display: 'flex', alignItems: 'center',
+                    opacity: index === 0 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s',
+                  }}
+                  onMouseEnter={e => { if (index !== 0 && !saving) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
+                >
+                  <ChevronUp size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMove(index, 'down')}
+                  disabled={saving || index === items.length - 1}
+                  style={{
+                    border: 'none', background: 'none', padding: 3, borderRadius: 4,
+                    cursor: index === items.length - 1 || saving ? 'default' : 'pointer',
+                    color: '#94a3b8', display: 'flex', alignItems: 'center',
+                    opacity: index === items.length - 1 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s',
+                  }}
+                  onMouseEnter={e => { if (index !== items.length - 1 && !saving) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
+                >
+                  <ChevronDown size={13} />
+                </button>
+              </div>
+
+              <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1 }}>{item}</span>
+
               <button
                 onClick={() => onRemove(item)}
                 disabled={saving}
@@ -114,6 +149,13 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
     }
   }
 
+  function moveItem(arr, index, direction) {
+    const next = [...arr];
+    const target = direction === 'up' ? index - 1 : index + 1;
+    [next[index], next[target]] = [next[target], next[index]];
+    return next;
+  }
+
   function addCoating(val) {
     if (coatings.includes(val)) return;
     const updated = [...coatings, val];
@@ -123,6 +165,12 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
 
   function removeCoating(val) {
     const updated = coatings.filter(c => c !== val);
+    setCoatings(updated);
+    persist(updated, colors);
+  }
+
+  function moveCoating(index, direction) {
+    const updated = moveItem(coatings, index, direction);
     setCoatings(updated);
     persist(updated, colors);
   }
@@ -140,6 +188,12 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
     persist(coatings, updated);
   }
 
+  function moveColor(index, direction) {
+    const updated = moveItem(colors, index, direction);
+    setColors(updated);
+    persist(coatings, updated);
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -153,6 +207,7 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
           items={coatings}
           onAdd={addCoating}
           onRemove={removeCoating}
+          onMove={moveCoating}
           saving={saving}
         />
 
@@ -163,6 +218,7 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
           items={colors}
           onAdd={addColor}
           onRemove={removeColor}
+          onMove={moveColor}
           saving={saving}
         />
 

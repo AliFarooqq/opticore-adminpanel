@@ -4,15 +4,21 @@ import { Pencil, Trash2, Plus, ChevronRight } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ContactLensForm from '../components/contactLenses/ContactLensForm';
+import SearchInput from '../components/ui/SearchInput';
+import FilterSelect from '../components/ui/FilterSelect';
 import { getContactLenses, deleteContactLens } from '../services/contactLensesService';
 import { getContactSupplier } from '../services/contactSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
-import { LENS_SHAPE_LABELS, VISION_TYPE_LABELS, WEARING_TIME_LABELS, PACK_TYPE_LABELS } from '../constants/lensOptions';
+import {
+  LENS_SHAPES, LENS_SHAPE_LABELS,
+  VISION_TYPES, VISION_TYPE_LABELS,
+  WEARING_TIMES, WEARING_TIME_LABELS,
+  PACK_TYPES, PACK_TYPE_LABELS,
+} from '../constants/lensOptions';
 
 export default function ContactLensesPage() {
   const { supplierId, brandId } = useParams();
@@ -27,10 +33,29 @@ export default function ContactLensesPage() {
     [supplierId, brandId]
   );
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ visionType: '', lensShape: '', wearingTime: '', packType: '' });
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  function clearFilters() {
+    setFilters({ visionType: '', lensShape: '', wearingTime: '', packType: '' });
+    setSearchQuery('');
+  }
+
+  const visibleLenses = lenses.filter(l => {
+    if (searchQuery && !l.productName?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filters.visionType && l.visionType !== filters.visionType) return false;
+    if (filters.lensShape && l.lensShape !== filters.lensShape) return false;
+    if (filters.wearingTime && l.wearingTime !== filters.wearingTime) return false;
+    if (filters.packType && l.packType !== filters.packType) return false;
+    return true;
+  });
+
+  const hasActiveSearch = searchQuery || activeFilterCount > 0;
 
   function openAdd() {
     setEditTarget(null);
@@ -114,19 +139,69 @@ export default function ContactLensesPage() {
             <span style={{ color: '#0f172a', fontWeight: 600 }}>Contact Lenses</span>
           </nav>
 
-          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{lenses.length} lens{lenses.length !== 1 ? 'es' : ''} total</p>
-            <Button onClick={openAdd}>
-              <Plus size={16} /> Add Contact Lens
-            </Button>
+          <div style={{ marginBottom: 20 }}>
+            {/* Row 1: search + count + add */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search lenses…"
+                />
+                <p style={{ color: '#94a3b8', fontSize: 13, margin: 0, whiteSpace: 'nowrap' }}>
+                  {hasActiveSearch
+                    ? `${visibleLenses.length} of ${lenses.length}`
+                    : `${lenses.length} lens${lenses.length !== 1 ? 'es' : ''}`}
+                </p>
+              </div>
+              <Button onClick={openAdd}>
+                <Plus size={16} /> Add Contact Lens
+              </Button>
+            </div>
+
+            {/* Row 2: attribute filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <FilterSelect
+                value={filters.visionType}
+                onChange={v => setFilters(p => ({ ...p, visionType: v }))}
+                placeholder="Vision Type"
+                options={VISION_TYPES.map(v => ({ value: v, label: VISION_TYPE_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.lensShape}
+                onChange={v => setFilters(p => ({ ...p, lensShape: v }))}
+                placeholder="Shape"
+                options={LENS_SHAPES.map(v => ({ value: v, label: LENS_SHAPE_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.wearingTime}
+                onChange={v => setFilters(p => ({ ...p, wearingTime: v }))}
+                placeholder="Wearing Time"
+                options={WEARING_TIMES.map(v => ({ value: v, label: WEARING_TIME_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.packType}
+                onChange={v => setFilters(p => ({ ...p, packType: v }))}
+                placeholder="Pack"
+                options={PACK_TYPES.map(v => ({ value: v, label: PACK_TYPE_LABELS[v] }))}
+              />
+              {hasActiveSearch && (
+                <button
+                  onClick={clearFilters}
+                  style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 6, whiteSpace: 'nowrap' }}
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', overflowX: 'auto', overflowY: 'hidden' }}>
             <Table
               columns={columns}
-              data={lenses}
+              data={visibleLenses}
               loading={loading}
-              emptyMessage="No contact lenses yet."
+              emptyMessage={hasActiveSearch ? 'No lenses match your search or filters.' : 'No contact lenses yet.'}
             />
           </div>
         </div>

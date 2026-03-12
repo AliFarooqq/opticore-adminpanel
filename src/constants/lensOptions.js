@@ -13,7 +13,7 @@ export const LENS_TYPES = [
   'all',
 ];
 
-export const GEOMETRIES = ['sph', 'as', 'both'];
+export const GEOMETRIES = ['sph', 'as'];
 
 export const REFRACTIVE_INDICES = [1.50, 1.53, 1.56, 1.59, 1.60, 1.67, 1.74];
 

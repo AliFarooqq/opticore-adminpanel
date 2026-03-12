@@ -6,6 +6,7 @@ import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import SupplierForm from '../components/suppliers/SupplierForm';
+import SearchInput from '../components/ui/SearchInput';
 import { getIvlSuppliers, deleteIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSuppliers, deleteContactSupplier } from '../services/contactSuppliersService';
 import { useFirestoreCollection } from '../hooks/useFirestore';
@@ -23,10 +24,15 @@ export default function SuppliersPage({ supplierType }) {
 
   const { data: suppliers, loading, reload } = useFirestoreCollection(getFn, [supplierType]);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const visibleSuppliers = suppliers.filter(s =>
+    s.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   function openAdd() {
     setEditTarget(null);
@@ -107,9 +113,18 @@ export default function SuppliersPage({ supplierType }) {
       <Header title={pageTitle} />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
         <div className="page-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 40px' }}>
-          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <div>
-              <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{suppliers.length} supplier{suppliers.length !== 1 ? 's' : ''} total</p>
+          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search suppliers…"
+              />
+              <p style={{ color: '#94a3b8', fontSize: 13, margin: 0, whiteSpace: 'nowrap' }}>
+                {searchQuery
+                  ? `${visibleSuppliers.length} of ${suppliers.length}`
+                  : `${suppliers.length} supplier${suppliers.length !== 1 ? 's' : ''}`}
+              </p>
             </div>
             <Button onClick={openAdd}>
               <Plus size={16} /> Add Supplier
@@ -119,9 +134,9 @@ export default function SuppliersPage({ supplierType }) {
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', overflowX: 'auto', overflowY: 'hidden' }}>
             <Table
               columns={columns}
-              data={suppliers}
+              data={visibleSuppliers}
               loading={loading}
-              emptyMessage="No suppliers yet. Click Add Supplier to get started."
+              emptyMessage={searchQuery ? 'No suppliers match your search.' : 'No suppliers yet. Click Add Supplier to get started.'}
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Pencil, Trash2, Plus, ChevronRight, ChevronDown /* Grid3X3 */ } from 'lucide-react';
 import Header from '../components/layout/Header';
@@ -8,12 +8,21 @@ import Spinner from '../components/ui/Spinner';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IvlLensForm from '../components/ivlLenses/IvlLensForm';
+import SearchInput from '../components/ui/SearchInput';
+import FilterSelect from '../components/ui/FilterSelect';
 import { getIvlLenses, deleteIvlLens } from '../services/ivlLensesService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
 import { useToast } from '../hooks/useToast';
-import { DESIGN_LABELS, MATERIAL_LABELS, LENS_TYPE_LABELS, GEOMETRY_LABELS, CYL_FORMAT_LABELS } from '../constants/lensOptions';
+import {
+  DESIGNS, DESIGN_LABELS,
+  MATERIALS, MATERIAL_LABELS,
+  LENS_TYPES, LENS_TYPE_LABELS,
+  REFRACTIVE_INDICES,
+  GEOMETRIES, GEOMETRY_LABELS,
+  CYL_FORMAT_LABELS,
+} from '../constants/lensOptions';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -85,17 +94,51 @@ export default function IvlLensesPage() {
   );
 
   const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ design: '', material: '', lensType: '', index: '', geometry: '', coating: '', color: '' });
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedIds, setExpandedIds] = useState(new Set());
 
-  const filteredLenses = lenses.filter(l => {
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  function clearFilters() {
+    setFilters({ design: '', material: '', lensType: '', index: '', geometry: '', coating: '', color: '' });
+    setSearchQuery('');
+  }
+
+  // Derive coating/color options from actual data (brand-specific)
+  const coatingOptions = useMemo(() =>
+    [...new Set(lenses.map(l => l.coating).filter(Boolean))].map(v => ({ value: v, label: v })),
+    [lenses]
+  );
+  const colorOptions = useMemo(() =>
+    [...new Set(lenses.map(l => l.color).filter(Boolean))].map(v => ({ value: v, label: v })),
+    [lenses]
+  );
+
+  // Step 1: Stock/RX toggle filter
+  const availabilityFiltered = lenses.filter(l => {
     if (filter === 'stock') return l.availability === 'stock';
     if (filter === 'rx') return l.availability === 'rx';
     return true;
   });
+
+  // Step 2: Search + attribute filters
+  const filteredLenses = availabilityFiltered.filter(l => {
+    if (searchQuery && !l.productName?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filters.design && l.design !== filters.design) return false;
+    if (filters.material && l.material !== filters.material) return false;
+    if (filters.lensType && !l.lensTypes?.includes(filters.lensType)) return false;
+    if (filters.index && String(l.refractiveIndex) !== filters.index) return false;
+    if (filters.geometry && l.geometry !== filters.geometry) return false;
+    if (filters.coating && l.coating !== filters.coating) return false;
+    if (filters.color && l.color !== filters.color) return false;
+    return true;
+  });
+
+  const hasActiveSearch = searchQuery || activeFilterCount > 0;
 
   function openAdd() { setEditTarget(null); setFormOpen(true); }
   function openEdit(lens) { setEditTarget(lens); setFormOpen(true); }
@@ -149,26 +192,99 @@ export default function IvlLensesPage() {
           </nav>
 
           {/* Toolbar */}
-          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div style={{ display: 'flex', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-              {['all', 'stock', 'rx'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    padding: '8px 18px', fontSize: 13, fontWeight: 600,
-                    border: 'none', cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
-                    background: filter === f ? '#0f2540' : '#fff',
-                    color: filter === f ? '#fff' : '#475569',
-                  }}
-                >
-                  {f === 'all' ? 'All' : f.toUpperCase()}
-                </button>
-              ))}
+          <div style={{ marginBottom: 16 }}>
+            {/* Row 1: toggle + search + add */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  {['all', 'stock', 'rx'].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      style={{
+                        padding: '8px 18px', fontSize: 13, fontWeight: 600,
+                        border: 'none', cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
+                        background: filter === f ? '#0f2540' : '#fff',
+                        color: filter === f ? '#fff' : '#475569',
+                      }}
+                    >
+                      {f === 'all' ? 'All' : f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search lenses…"
+                />
+              </div>
+              <Button onClick={openAdd}>
+                <Plus size={16} /> Add IVL Lens
+              </Button>
             </div>
-            <Button onClick={openAdd}>
-              <Plus size={16} /> Add IVL Lens
-            </Button>
+
+            {/* Row 2: attribute filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <FilterSelect
+                value={filters.design}
+                onChange={v => setFilters(p => ({ ...p, design: v }))}
+                placeholder="Design"
+                options={DESIGNS.map(v => ({ value: v, label: DESIGN_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.material}
+                onChange={v => setFilters(p => ({ ...p, material: v }))}
+                placeholder="Material"
+                options={MATERIALS.map(v => ({ value: v, label: MATERIAL_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.lensType}
+                onChange={v => setFilters(p => ({ ...p, lensType: v }))}
+                placeholder="Lens Type"
+                options={LENS_TYPES.map(v => ({ value: v, label: LENS_TYPE_LABELS[v] }))}
+              />
+              <FilterSelect
+                value={filters.index}
+                onChange={v => setFilters(p => ({ ...p, index: v }))}
+                placeholder="Index"
+                options={REFRACTIVE_INDICES.map(v => ({ value: String(v), label: v.toFixed(2) }))}
+              />
+              <FilterSelect
+                value={filters.geometry}
+                onChange={v => setFilters(p => ({ ...p, geometry: v }))}
+                placeholder="Geometry"
+                options={GEOMETRIES.map(v => ({ value: v, label: GEOMETRY_LABELS[v] }))}
+              />
+              {coatingOptions.length > 0 && (
+                <FilterSelect
+                  value={filters.coating}
+                  onChange={v => setFilters(p => ({ ...p, coating: v }))}
+                  placeholder="Coating"
+                  options={coatingOptions}
+                />
+              )}
+              {colorOptions.length > 0 && (
+                <FilterSelect
+                  value={filters.color}
+                  onChange={v => setFilters(p => ({ ...p, color: v }))}
+                  placeholder="Color"
+                  options={colorOptions}
+                />
+              )}
+              {hasActiveSearch && (
+                <button
+                  onClick={clearFilters}
+                  style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 6, whiteSpace: 'nowrap' }}
+                >
+                  Clear all
+                </button>
+              )}
+              {hasActiveSearch && (
+                <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 2 }}>
+                  {filteredLenses.length} of {availabilityFiltered.length} result{filteredLenses.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Table */}
@@ -177,8 +293,9 @@ export default function IvlLensesPage() {
               <Spinner />
             ) : filteredLenses.length === 0 ? (
               <EmptyState title={
-                filter === 'stock' ? 'No Stock IVL lenses found' :
-                filter === 'rx'    ? 'No RX IVL lenses found' :
+                hasActiveSearch ? 'No lenses match your search or filters.' :
+                filter === 'stock' ? 'No Stock IVL lenses found.' :
+                filter === 'rx'    ? 'No RX IVL lenses found.' :
                                      'No IVL lenses found. Click Add IVL Lens to get started.'
               } />
             ) : (

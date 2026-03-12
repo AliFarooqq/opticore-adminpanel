@@ -6,6 +6,7 @@ import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import BrandForm from '../components/brands/BrandForm';
+import SearchInput from '../components/ui/SearchInput';
 import { getBrands, deleteBrand } from '../services/brandsService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSupplier } from '../services/contactSuppliersService';
@@ -28,10 +29,15 @@ export default function BrandsPage({ supplierType }) {
     [supplierId]
   );
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const visibleBrands = brands.filter(b =>
+    b.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   function openAdd() {
     setEditTarget(null);
@@ -114,8 +120,19 @@ export default function BrandsPage({ supplierType }) {
             <span style={{ color: '#0f172a', fontWeight: 600 }}>{supplier?.name || '…'}</span>
           </nav>
 
-          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>{brands.length} brand{brands.length !== 1 ? 's' : ''} total</p>
+          <div className="page-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search brands…"
+              />
+              <p style={{ color: '#94a3b8', fontSize: 13, margin: 0, whiteSpace: 'nowrap' }}>
+                {searchQuery
+                  ? `${visibleBrands.length} of ${brands.length}`
+                  : `${brands.length} brand${brands.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
             <Button onClick={openAdd}>
               <Plus size={16} /> Add Brand
             </Button>
@@ -124,9 +141,9 @@ export default function BrandsPage({ supplierType }) {
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', overflowX: 'auto', overflowY: 'hidden' }}>
             <Table
               columns={columns}
-              data={brands}
+              data={visibleBrands}
               loading={loading}
-              emptyMessage="No brands yet. Click Add Brand to get started."
+              emptyMessage={searchQuery ? 'No brands match your search.' : 'No brands yet. Click Add Brand to get started.'}
             />
           </div>
         </div>
