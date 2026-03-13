@@ -109,6 +109,47 @@ export default function IvlLensesPage() {
     setSearchQuery('');
   }
 
+  // Material ↔ Index mutual constraint
+  // If material is selected → only show indices allowed for that material
+  const availableIndexOptions = useMemo(() => {
+    const base = filters.material
+      ? (REFRACTIVE_INDICES_BY_MATERIAL[filters.material] || [])
+      : REFRACTIVE_INDICES;
+    return base.map(v => ({ value: String(v), label: v.toFixed(2) }));
+  }, [filters.material]);
+
+  // If index is selected → only show materials that support that index
+  const availableMaterialOptions = useMemo(() => {
+    const base = filters.index
+      ? MATERIALS.filter(m =>
+          (REFRACTIVE_INDICES_BY_MATERIAL[m] || []).map(String).includes(filters.index)
+        )
+      : MATERIALS;
+    return base.map(v => ({ value: v, label: MATERIAL_LABELS[v] }));
+  }, [filters.index]);
+
+  function handleMaterialChange(v) {
+    const allowed = (REFRACTIVE_INDICES_BY_MATERIAL[v] || []).map(String);
+    setFilters(p => ({
+      ...p,
+      material: v,
+      // clear index if it's no longer valid for the new material
+      index: v && p.index && !allowed.includes(p.index) ? '' : p.index,
+    }));
+  }
+
+  function handleIndexChange(v) {
+    const supporting = MATERIALS.filter(m =>
+      (REFRACTIVE_INDICES_BY_MATERIAL[m] || []).map(String).includes(v)
+    );
+    setFilters(p => ({
+      ...p,
+      index: v,
+      // clear material if it doesn't offer the new index
+      material: v && p.material && !supporting.includes(p.material) ? '' : p.material,
+    }));
+  }
+
   // Derive coating/color options from actual data (brand-specific)
   const coatingOptions = useMemo(() =>
     [...new Set(lenses.map(l => l.coating).filter(Boolean))].map(v => ({ value: v, label: v })),
