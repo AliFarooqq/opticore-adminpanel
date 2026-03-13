@@ -335,10 +335,9 @@ export default function IvlLensesPage() {
               <Spinner />
             ) : filteredLenses.length === 0 ? (
               <EmptyState title={
-                hasActiveSearch ? 'No lenses match your search or filters.' :
-                filter === 'stock' ? 'No Stock IVL lenses found.' :
-                filter === 'rx'    ? 'No RX IVL lenses found.' :
-                                     'No IVL lenses found. Click Add IVL Lens to get started.'
+                hasActiveSearch  ? 'No lenses match your search or filters.' :
+                filter === 'stock' ? 'No Stock lenses yet. Click Add IVL Lens to get started.' :
+                                     'No RX lenses yet. Click Add IVL Lens to get started.'
               } />
             ) : (
               <table style={{ width: '100%', minWidth: 1380, borderCollapse: 'collapse', fontSize: 13 }}>
