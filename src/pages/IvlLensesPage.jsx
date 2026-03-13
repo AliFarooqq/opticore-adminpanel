@@ -94,7 +94,7 @@ export default function IvlLensesPage() {
     [supplierId, brandId]
   );
 
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('stock');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ design: '', material: '', lensType: '', index: '', geometry: '', coating: '', color: '' });
   const [formOpen, setFormOpen] = useState(false);
@@ -239,7 +239,7 @@ export default function IvlLensesPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ display: 'flex', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  {['all', 'stock', 'rx'].map(f => (
+                  {['stock', 'rx'].map(f => (
                     <button
                       key={f}
                       onClick={() => setFilter(f)}
@@ -250,7 +250,7 @@ export default function IvlLensesPage() {
                         color: filter === f ? '#fff' : '#475569',
                       }}
                     >
-                      {f === 'all' ? 'All' : f.toUpperCase()}
+                      {f.toUpperCase()}
                     </button>
                   ))}
                 </div>
