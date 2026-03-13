@@ -275,9 +275,9 @@ export default function IvlLensesPage() {
               />
               <FilterSelect
                 value={filters.material}
-                onChange={v => setFilters(p => ({ ...p, material: v }))}
+                onChange={handleMaterialChange}
                 placeholder="Material"
-                options={MATERIALS.map(v => ({ value: v, label: MATERIAL_LABELS[v] }))}
+                options={availableMaterialOptions}
               />
               <FilterSelect
                 value={filters.lensType}
@@ -287,9 +287,9 @@ export default function IvlLensesPage() {
               />
               <FilterSelect
                 value={filters.index}
-                onChange={v => setFilters(p => ({ ...p, index: v }))}
+                onChange={handleIndexChange}
                 placeholder="Index"
-                options={REFRACTIVE_INDICES.map(v => ({ value: String(v), label: v.toFixed(2) }))}
+                options={availableIndexOptions}
               />
               <FilterSelect
                 value={filters.geometry}
