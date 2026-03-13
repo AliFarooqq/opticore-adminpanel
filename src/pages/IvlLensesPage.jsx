@@ -352,8 +352,8 @@ export default function IvlLensesPage() {
                     <th style={TH}>Geometry</th>
                     <th style={TH}>Coating</th>
                     <th style={TH}>Color</th>
-                    <th style={TH}>Wholesale</th>
-                    <th style={TH}>Retail</th>
+                    {filter === 'stock' && <th style={TH}>Wholesale</th>}
+                    {filter === 'stock' && <th style={TH}>Retail</th>}
                     <th style={TH}>Availability</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -407,12 +407,12 @@ export default function IvlLensesPage() {
                           <td style={TD}>{GEOMETRY_LABELS[l.geometry] || l.geometry || '—'}</td>
                           <td style={TD}>{l.coating || '—'}</td>
                           <td style={TD}>{l.color || '—'}</td>
-                          <td style={TD}>
-                            {isRx ? '—' : l.wholesalePrice != null ? `€${parseFloat(l.wholesalePrice).toFixed(2)}` : '—'}
-                          </td>
-                          <td style={TD}>
-                            {isRx ? '—' : l.retailPrice != null ? `€${parseFloat(l.retailPrice).toFixed(2)}` : '—'}
-                          </td>
+                          {filter === 'stock' && (
+                            <td style={TD}>{l.wholesalePrice != null ? `€${parseFloat(l.wholesalePrice).toFixed(2)}` : '—'}</td>
+                          )}
+                          {filter === 'stock' && (
+                            <td style={TD}>{l.retailPrice != null ? `€${parseFloat(l.retailPrice).toFixed(2)}` : '—'}</td>
+                          )}
                           <td style={TD}>
                             <Badge variant={isRx ? 'blue' : 'green'}>{isRx ? 'RX' : 'Stock'}</Badge>
                           </td>
