@@ -452,7 +452,7 @@ export default function IvlLensesPage() {
                             {/* Indent */}
                             <td style={{ borderLeft: '3px solid #dde3ee', borderBottom: '1px solid #f1f5f9' }} />
                             {/* Sub-table spanning remaining columns */}
-                            <td colSpan={12} style={{ padding: '0 0 12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <td colSpan={filter === 'stock' ? 12 : 10} style={{ padding: '0 0 12px 0', borderBottom: '1px solid #f1f5f9' }}>
                               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                   <tr>
