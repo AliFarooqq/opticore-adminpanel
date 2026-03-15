@@ -501,7 +501,7 @@ export default function IvlLensesPage() {
         lens={editTarget}
         onSaved={reload}
         activeTab={filter}
-        brandCoatings={brand?.coatings || []}
+        brandCoatings={(brand?.coatings || []).map(c => typeof c === 'string' ? c : c.name)}
         brandColors={brand?.colors || []}
       />
 
