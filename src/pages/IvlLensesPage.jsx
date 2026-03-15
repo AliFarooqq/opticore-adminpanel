@@ -389,12 +389,6 @@ export default function IvlLensesPage() {
                           <td style={TD}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span style={{ fontWeight: 600, color: '#0f172a' }}>{l.productName}</span>
-                              {l.hasBlueProtection && (
-                                <span style={{
-                                  fontSize: 10, fontWeight: 700, padding: '2px 7px',
-                                  borderRadius: 20, background: '#dbeafe', color: '#1d4ed8',
-                                }}>Blue Block</span>
-                              )}
                               {isRx && (
                                 <span style={{
                                   fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
@@ -411,7 +405,20 @@ export default function IvlLensesPage() {
                           <td style={TD}>{LENS_TYPE_LABELS[l.lensTypes?.[0]] || l.lensTypes?.[0] || '—'}</td>
                           <td style={TD}>{l.refractiveIndex?.toFixed(2) ?? '—'}</td>
                           <td style={TD}>{GEOMETRY_LABELS[l.geometry] || l.geometry || '—'}</td>
-                          <td style={TD}>{l.coating || '—'}</td>
+                          <td style={TD}>
+                            {l.coating ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                {l.coating}
+                                {(brand?.coatings || []).find(c => c.name === l.coating)?.hasBlueProtection && (
+                                  <span style={{
+                                    fontSize: 10, fontWeight: 700, padding: '2px 7px',
+                                    borderRadius: 20, background: '#dbeafe', color: '#1d4ed8',
+                                    whiteSpace: 'nowrap',
+                                  }}>Blue Block</span>
+                                )}
+                              </span>
+                            ) : '—'}
+                          </td>
                           <td style={TD}>{l.color || '—'}</td>
                           {filter === 'stock' && (
                             <td style={TD}>{l.wholesalePrice != null ? `€${parseFloat(l.wholesalePrice).toFixed(2)}` : '—'}</td>
