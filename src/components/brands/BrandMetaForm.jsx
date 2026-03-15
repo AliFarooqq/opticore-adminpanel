@@ -230,6 +230,8 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
           onAdd={addCoating}
           onRemove={removeCoating}
           onMove={moveCoating}
+          onToggleBlue={toggleCoatingBlue}
+          isCoatings
           saving={saving}
         />
 
