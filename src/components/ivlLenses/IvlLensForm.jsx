@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useForm, Controller } from 'react-hook-form';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -101,6 +102,72 @@ function BottomSheetSelector({ label, options, labels, value, onChange, error })
           >
             <span>{labels?.[opt] || opt}</span>
             {value === opt && (
+              <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>
+            )}
+          </button>
+        ))}
+      </BottomSheet>
+    </div>
+  );
+}
+
+// Coating selector — shows name + Blue Block badge for coatings with hasBlueProtection
+// coatings: [{ name: string, hasBlueProtection: bool }]
+// value: string (the selected coating name)
+function CoatingSelector({ coatings, value, onChange, error }) {
+  const [open, setOpen] = useState(false);
+  const selected = coatings.find(c => c.name === value);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Coating *</label>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: 44, padding: '0 14px',
+          borderRadius: 10, border: error ? '1.5px solid #ef4444' : '1.5px solid #e2e8f0',
+          background: '#f8fafc', cursor: 'pointer',
+          fontSize: 14, color: value ? '#0f172a' : '#94a3b8', fontWeight: 500,
+          textAlign: 'left', width: '100%',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {value || 'Select coating…'}
+          {selected?.hasBlueProtection && (
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: '#dbeafe', color: '#1d4ed8', lineHeight: 1.4 }}>
+              Blue Block
+            </span>
+          )}
+        </span>
+        <span style={{ color: '#94a3b8', fontSize: 11 }}>▾</span>
+      </button>
+      {error && <p style={{ fontSize: 12, color: '#ef4444', margin: '2px 0 0' }}>{error}</p>}
+      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Select Coating">
+        {coatings.map(c => (
+          <button
+            key={c.name}
+            type="button"
+            onClick={() => { onChange(c.name); setOpen(false); }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '15px 20px', border: 'none', background: 'none', cursor: 'pointer',
+              fontSize: 14, textAlign: 'left',
+              color: value === c.name ? '#1e3a5f' : '#374151',
+              fontWeight: value === c.name ? 700 : 400,
+              borderBottom: '1px solid #f8fafc',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {c.name}
+              {c.hasBlueProtection && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: '#dbeafe', color: '#1d4ed8', lineHeight: 1.4 }}>
+                  Blue Block
+                </span>
+              )}
+            </span>
+            {value === c.name && (
               <span style={{ color: '#1e3a5f', fontWeight: 700, fontSize: 16 }}>✓</span>
             )}
           </button>
