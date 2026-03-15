@@ -5,7 +5,9 @@ import Button from '../ui/Button';
 import { updateBrandMeta } from '../../services/brandsService';
 import { useToast } from '../../hooks/useToast';
 
-function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
+// isCoatings=true  → items are { name, hasBlueProtection } objects
+// isCoatings=false → items are plain strings (colors)
+function MetaList({ title, items, onAdd, onRemove, onMove, onToggleBlue, isCoatings = false, saving }) {
   const [input, setInput] = useState('');
 
   function handleAdd() {
@@ -14,6 +16,9 @@ function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
     onAdd(val);
     setInput('');
   }
+
+  const getName = item => isCoatings ? item.name : item;
+  const getKey  = item => isCoatings ? item.name : item;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -28,7 +33,7 @@ function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
         ) : (
           items.map((item, index) => (
             <div
-              key={item}
+              key={getKey(item)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '8px 12px', borderRadius: 8,
@@ -41,12 +46,7 @@ function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
                   type="button"
                   onClick={() => onMove(index, 'up')}
                   disabled={saving || index === 0}
-                  style={{
-                    border: 'none', background: 'none', padding: 3, borderRadius: 4,
-                    cursor: index === 0 || saving ? 'default' : 'pointer',
-                    color: '#94a3b8', display: 'flex', alignItems: 'center',
-                    opacity: index === 0 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s',
-                  }}
+                  style={{ border: 'none', background: 'none', padding: 3, borderRadius: 4, cursor: index === 0 || saving ? 'default' : 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', opacity: index === 0 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s' }}
                   onMouseEnter={e => { if (index !== 0 && !saving) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
                 >
@@ -56,12 +56,7 @@ function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
                   type="button"
                   onClick={() => onMove(index, 'down')}
                   disabled={saving || index === items.length - 1}
-                  style={{
-                    border: 'none', background: 'none', padding: 3, borderRadius: 4,
-                    cursor: index === items.length - 1 || saving ? 'default' : 'pointer',
-                    color: '#94a3b8', display: 'flex', alignItems: 'center',
-                    opacity: index === items.length - 1 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s',
-                  }}
+                  style={{ border: 'none', background: 'none', padding: 3, borderRadius: 4, cursor: index === items.length - 1 || saving ? 'default' : 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', opacity: index === items.length - 1 ? 0.2 : 1, transition: 'color 0.15s, background 0.15s' }}
                   onMouseEnter={e => { if (index !== items.length - 1 && !saving) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
                 >
@@ -69,10 +64,29 @@ function MetaList({ title, items, onAdd, onRemove, onMove, saving }) {
                 </button>
               </div>
 
-              <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1 }}>{item}</span>
+              <span style={{ fontSize: 13, color: '#374151', fontWeight: 500, flex: 1 }}>{getName(item)}</span>
+
+              {/* Blue protection toggle — coatings only */}
+              {isCoatings && (
+                <button
+                  type="button"
+                  onClick={() => onToggleBlue(index)}
+                  disabled={saving}
+                  title="Toggle blue light protection"
+                  style={{
+                    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+                    border: 'none', cursor: saving ? 'not-allowed' : 'pointer', marginRight: 4,
+                    transition: 'background 0.15s, color 0.15s',
+                    background: item.hasBlueProtection ? '#dbeafe' : '#f1f5f9',
+                    color: item.hasBlueProtection ? '#1d4ed8' : '#94a3b8',
+                  }}
+                >
+                  Blue Block
+                </button>
+              )}
 
               <button
-                onClick={() => onRemove(item)}
+                onClick={() => onRemove(getName(item))}
                 disabled={saving}
                 style={{
                   border: 'none', background: 'none', cursor: saving ? 'not-allowed' : 'pointer',

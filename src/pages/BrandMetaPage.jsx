@@ -11,7 +11,9 @@ import { useToast } from '../hooks/useToast';
 
 // ── Reusable list section ─────────────────────────────────────────────────────
 
-function MetaSection({ title, items, onAdd, onRemove, onMove }) {
+// isCoatings=true  → items are { name, hasBlueProtection } objects
+// isCoatings=false → items are plain strings (colors)
+function MetaSection({ title, items, onAdd, onRemove, onMove, onToggleBlue, isCoatings = false }) {
   const [input, setInput] = useState('');
 
   function handleAdd() {
@@ -21,11 +23,8 @@ function MetaSection({ title, items, onAdd, onRemove, onMove }) {
     setInput('');
   }
 
-  const moveBtn = (index, dir) => ({
-    border: 'none', background: 'none', cursor: 'pointer',
-    color: '#94a3b8', display: 'flex', alignItems: 'center',
-    padding: 3, borderRadius: 5, transition: 'color 0.15s, background 0.15s',
-  });
+  const getName = item => isCoatings ? item.name : item;
+  const getKey  = item => isCoatings ? item.name : item;
 
   return (
     <div style={{
@@ -44,7 +43,7 @@ function MetaSection({ title, items, onAdd, onRemove, onMove }) {
         ) : (
           items.map((item, index) => (
             <div
-              key={item}
+              key={getKey(item)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '9px 12px', borderRadius: 9,
@@ -56,7 +55,7 @@ function MetaSection({ title, items, onAdd, onRemove, onMove }) {
                 <button
                   onClick={() => onMove(index, 'up')}
                   disabled={index === 0}
-                  style={{ ...moveBtn(), opacity: index === 0 ? 0.2 : 1, cursor: index === 0 ? 'default' : 'pointer' }}
+                  style={{ border: 'none', background: 'none', padding: 3, borderRadius: 5, color: '#94a3b8', display: 'flex', alignItems: 'center', opacity: index === 0 ? 0.2 : 1, cursor: index === 0 ? 'default' : 'pointer', transition: 'color 0.15s, background 0.15s' }}
                   onMouseEnter={e => { if (index !== 0) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
                 >
@@ -65,7 +64,7 @@ function MetaSection({ title, items, onAdd, onRemove, onMove }) {
                 <button
                   onClick={() => onMove(index, 'down')}
                   disabled={index === items.length - 1}
-                  style={{ ...moveBtn(), opacity: index === items.length - 1 ? 0.2 : 1, cursor: index === items.length - 1 ? 'default' : 'pointer' }}
+                  style={{ border: 'none', background: 'none', padding: 3, borderRadius: 5, color: '#94a3b8', display: 'flex', alignItems: 'center', opacity: index === items.length - 1 ? 0.2 : 1, cursor: index === items.length - 1 ? 'default' : 'pointer', transition: 'color 0.15s, background 0.15s' }}
                   onMouseEnter={e => { if (index !== items.length - 1) { e.currentTarget.style.color = '#1e3a5f'; e.currentTarget.style.background = '#e8edf5'; }}}
                   onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'none'; }}
                 >
@@ -73,10 +72,27 @@ function MetaSection({ title, items, onAdd, onRemove, onMove }) {
                 </button>
               </div>
 
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#374151', flex: 1 }}>{item}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#374151', flex: 1 }}>{getName(item)}</span>
+
+              {/* Blue protection toggle — coatings only */}
+              {isCoatings && (
+                <button
+                  onClick={() => onToggleBlue(index)}
+                  title="Toggle blue light protection"
+                  style={{
+                    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+                    border: 'none', cursor: 'pointer', marginRight: 4,
+                    transition: 'background 0.15s, color 0.15s',
+                    background: item.hasBlueProtection ? '#dbeafe' : '#f1f5f9',
+                    color: item.hasBlueProtection ? '#1d4ed8' : '#94a3b8',
+                  }}
+                >
+                  Blue Block
+                </button>
+              )}
 
               <button
-                onClick={() => onRemove(item)}
+                onClick={() => onRemove(getName(item))}
                 style={{
                   border: 'none', background: 'none', cursor: 'pointer',
                   color: '#94a3b8', display: 'flex', alignItems: 'center',
@@ -163,18 +179,25 @@ export default function BrandMetaPage({ supplierType }) {
   }
 
   function addCoating(val) {
-    if (coatings.includes(val)) return;
-    setCoatings(prev => [...prev, val]);
+    if (coatings.some(c => c.name === val)) return;
+    setCoatings(prev => [...prev, { name: val, hasBlueProtection: false }]);
     setDirty(true);
   }
 
-  function removeCoating(val) {
-    setCoatings(prev => prev.filter(c => c !== val));
+  function removeCoating(name) {
+    setCoatings(prev => prev.filter(c => c.name !== name));
     setDirty(true);
   }
 
   function moveCoating(index, direction) {
     setCoatings(prev => moveItem(prev, index, direction));
+    setDirty(true);
+  }
+
+  function toggleCoatingBlue(index) {
+    setCoatings(prev => prev.map((c, i) =>
+      i === index ? { ...c, hasBlueProtection: !c.hasBlueProtection } : c
+    ));
     setDirty(true);
   }
 
@@ -246,6 +269,8 @@ export default function BrandMetaPage({ supplierType }) {
               onAdd={addCoating}
               onRemove={removeCoating}
               onMove={moveCoating}
+              onToggleBlue={toggleCoatingBlue}
+              isCoatings
             />
             <MetaSection
               title="Colors"
