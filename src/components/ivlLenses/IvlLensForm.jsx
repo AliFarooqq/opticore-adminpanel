@@ -645,10 +645,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               rules={{ required: brandCoatings.length > 0 ? 'Coating is required' : false }}
               render={({ field }) => (
                 brandCoatings.length > 0 ? (
-                  <BottomSheetSelector
-                    label="Coating *"
-                    options={brandCoatings}
-                    labels={Object.fromEntries(brandCoatings.map(c => [c, c]))}
+                  <CoatingSelector
+                    coatings={brandCoatings}
                     value={field.value}
                     onChange={field.onChange}
                     error={errors.coating?.message}
