@@ -389,6 +389,12 @@ export default function IvlLensesPage() {
                           <td style={TD}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span style={{ fontWeight: 600, color: '#0f172a' }}>{l.productName}</span>
+                              {l.hasBlueProtection && (
+                                <span style={{
+                                  fontSize: 10, fontWeight: 700, padding: '2px 7px',
+                                  borderRadius: 20, background: '#dbeafe', color: '#1d4ed8',
+                                }}>Blue Block</span>
+                              )}
                               {isRx && (
                                 <span style={{
                                   fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
