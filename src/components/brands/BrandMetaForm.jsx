@@ -171,20 +171,28 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
   }
 
   function addCoating(val) {
-    if (coatings.includes(val)) return;
-    const updated = [...coatings, val];
+    if (coatings.some(c => c.name === val)) return;
+    const updated = [...coatings, { name: val, hasBlueProtection: false }];
     setCoatings(updated);
     persist(updated, colors);
   }
 
-  function removeCoating(val) {
-    const updated = coatings.filter(c => c !== val);
+  function removeCoating(name) {
+    const updated = coatings.filter(c => c.name !== name);
     setCoatings(updated);
     persist(updated, colors);
   }
 
   function moveCoating(index, direction) {
     const updated = moveItem(coatings, index, direction);
+    setCoatings(updated);
+    persist(updated, colors);
+  }
+
+  function toggleCoatingBlue(index) {
+    const updated = coatings.map((c, i) =>
+      i === index ? { ...c, hasBlueProtection: !c.hasBlueProtection } : c
+    );
     setCoatings(updated);
     persist(updated, colors);
   }
