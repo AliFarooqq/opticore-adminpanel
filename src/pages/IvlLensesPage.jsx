@@ -10,10 +10,11 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IvlLensForm from '../components/ivlLenses/IvlLensForm';
 import SearchInput from '../components/ui/SearchInput';
 import FilterSelect from '../components/ui/FilterSelect';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getIvlLenses, deleteIvlLens } from '../services/ivlLensesService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
-import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
+import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
 import {
   DESIGNS, DESIGN_LABELS,
@@ -84,15 +85,15 @@ export default function IvlLensesPage() {
   const { supplierId, brandId } = useParams();
   // const navigate = useNavigate(); // used by Stock Grid — hidden from client until ready
   const toast = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: supplier } = useFirestoreDoc(() => getIvlSupplier(supplierId), [supplierId]);
-  const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
+  const lensesKey = queryKeys.ivlLenses(supplierId, brandId);
+
+  const { data: supplier } = useQuery({ queryKey: queryKeys.ivlSupplier(supplierId), queryFn: () => getIvlSupplier(supplierId) });
+  const { data: brands = [] } = useQuery({ queryKey: queryKeys.brands(supplierId), queryFn: () => getBrands(supplierId) });
   const brand = brands.find(b => b.id === brandId);
 
-  const { data: lenses, loading, reload, setData: setLenses } = useFirestoreCollection(
-    () => getIvlLenses(supplierId, brandId),
-    [supplierId, brandId]
-  );
+  const { data: lenses = [], isLoading: loading } = useQuery({ queryKey: lensesKey, queryFn: () => getIvlLenses(supplierId, brandId) });
 
   const [filter, setFilter] = useState('stock');
   const [searchQuery, setSearchQuery] = useState('');
@@ -198,8 +199,8 @@ export default function IvlLensesPage() {
     setDeleting(true);
     try {
       await deleteIvlLens(supplierId, brandId, deleteTarget.id);
-      setLenses(prev => prev.filter(l => l.id !== deleteTarget.id));
       toast.success(`"${deleteTarget.productName}" deleted`);
+      queryClient.invalidateQueries({ queryKey: lensesKey });
     } catch (err) {
       toast.error(err.message || 'Failed to delete lens');
     } finally {
@@ -512,7 +513,7 @@ export default function IvlLensesPage() {
         supplierId={supplierId}
         brandId={brandId}
         lens={editTarget}
-        onSaved={reload}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: lensesKey })}
         activeTab={filter}
         brandCoatings={(brand?.coatings || []).map(c => typeof c === 'string' ? { name: c, hasBlueProtection: false } : c)}
         brandColors={brand?.colors || []}

@@ -7,10 +7,11 @@ import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import BrandForm from '../components/brands/BrandForm';
 import SearchInput from '../components/ui/SearchInput';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBrands, deleteBrand } from '../services/brandsService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSupplier } from '../services/contactSuppliersService';
-import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
+import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
 
 export default function BrandsPage({ supplierType }) {
@@ -18,16 +19,17 @@ export default function BrandsPage({ supplierType }) {
   const navigate = useNavigate();
   const toast = useToast();
 
+  const queryClient = useQueryClient();
+
   const isIvl = supplierType === 'ivl';
   const basePath = isIvl ? '/ivl-suppliers' : '/contact-suppliers';
   const suppliersLabel = isIvl ? 'IVL Suppliers' : 'Contact Suppliers';
   const getSupplierFn = isIvl ? getIvlSupplier : getContactSupplier;
+  const supplierKey = isIvl ? queryKeys.ivlSupplier(supplierId) : queryKeys.contactSupplier(supplierId);
+  const brandsKey = queryKeys.brands(supplierId);
 
-  const { data: supplier } = useFirestoreDoc(() => getSupplierFn(supplierId), [supplierId, supplierType]);
-  const { data: brands, loading, reload } = useFirestoreCollection(
-    () => getBrands(supplierId),
-    [supplierId]
-  );
+  const { data: supplier } = useQuery({ queryKey: supplierKey, queryFn: () => getSupplierFn(supplierId) });
+  const { data: brands = [], isLoading: loading } = useQuery({ queryKey: brandsKey, queryFn: () => getBrands(supplierId) });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -55,7 +57,7 @@ export default function BrandsPage({ supplierType }) {
     try {
       await deleteBrand(supplierId, deleteTarget.id);
       toast.success(`"${deleteTarget.name}" deleted`);
-      reload();
+      queryClient.invalidateQueries({ queryKey: brandsKey });
     } catch (err) {
       toast.error(err.message || 'Failed to delete brand');
     } finally {
@@ -154,7 +156,7 @@ export default function BrandsPage({ supplierType }) {
         onClose={() => setFormOpen(false)}
         supplierId={supplierId}
         brand={editTarget}
-        onSaved={reload}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: brandsKey })}
       />
 
 

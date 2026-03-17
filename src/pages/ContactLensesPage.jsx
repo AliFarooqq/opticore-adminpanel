@@ -8,10 +8,11 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ContactLensForm from '../components/contactLenses/ContactLensForm';
 import SearchInput from '../components/ui/SearchInput';
 import FilterSelect from '../components/ui/FilterSelect';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getContactLenses, deleteContactLens } from '../services/contactLensesService';
 import { getContactSupplier } from '../services/contactSuppliersService';
 import { getBrands } from '../services/brandsService';
-import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
+import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
 import {
   LENS_SHAPES, LENS_SHAPE_LABELS,
@@ -23,15 +24,15 @@ import {
 export default function ContactLensesPage() {
   const { supplierId, brandId } = useParams();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: supplier } = useFirestoreDoc(() => getContactSupplier(supplierId), [supplierId]);
-  const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
+  const lensesKey = queryKeys.contactLenses(supplierId, brandId);
+
+  const { data: supplier } = useQuery({ queryKey: queryKeys.contactSupplier(supplierId), queryFn: () => getContactSupplier(supplierId) });
+  const { data: brands = [] } = useQuery({ queryKey: queryKeys.brands(supplierId), queryFn: () => getBrands(supplierId) });
   const brand = brands.find(b => b.id === brandId);
 
-  const { data: lenses, loading, reload } = useFirestoreCollection(
-    () => getContactLenses(supplierId, brandId),
-    [supplierId, brandId]
-  );
+  const { data: lenses = [], isLoading: loading } = useQuery({ queryKey: lensesKey, queryFn: () => getContactLenses(supplierId, brandId) });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ visionType: '', lensShape: '', wearingTime: '', packType: '' });
@@ -73,7 +74,7 @@ export default function ContactLensesPage() {
     try {
       await deleteContactLens(supplierId, brandId, deleteTarget.id);
       toast.success(`"${deleteTarget.productName}" deleted`);
-      reload();
+      queryClient.invalidateQueries({ queryKey: lensesKey });
     } catch (err) {
       toast.error(err.message || 'Failed to delete lens');
     } finally {
@@ -213,7 +214,7 @@ export default function ContactLensesPage() {
         supplierId={supplierId}
         brandId={brandId}
         lens={editTarget}
-        onSaved={reload}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: lensesKey })}
       />
 
       <ConfirmDialog

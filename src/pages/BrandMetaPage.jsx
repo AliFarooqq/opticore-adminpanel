@@ -3,10 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Button from '../components/ui/Button';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getBrands, updateBrandMeta } from '../services/brandsService';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSupplier } from '../services/contactSuppliersService';
-import { useFirestoreCollection, useFirestoreDoc } from '../hooks/useFirestore';
+import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
 
 // ── Reusable list section ─────────────────────────────────────────────────────
@@ -149,13 +150,17 @@ export default function BrandMetaPage({ supplierType }) {
   const { supplierId, brandId } = useParams();
   const toast = useToast();
 
+  const queryClient = useQueryClient();
+
   const isIvl = supplierType === 'ivl';
   const basePath = isIvl ? '/ivl-suppliers' : '/contact-suppliers';
   const suppliersLabel = isIvl ? 'IVL Suppliers' : 'Contact Suppliers';
   const getSupplierFn = isIvl ? getIvlSupplier : getContactSupplier;
+  const supplierKey = isIvl ? queryKeys.ivlSupplier(supplierId) : queryKeys.contactSupplier(supplierId);
+  const brandsKey = queryKeys.brands(supplierId);
 
-  const { data: supplier } = useFirestoreDoc(() => getSupplierFn(supplierId), [supplierId]);
-  const { data: brands } = useFirestoreCollection(() => getBrands(supplierId), [supplierId]);
+  const { data: supplier } = useQuery({ queryKey: supplierKey, queryFn: () => getSupplierFn(supplierId) });
+  const { data: brands = [] } = useQuery({ queryKey: brandsKey, queryFn: () => getBrands(supplierId) });
   const brand = brands.find(b => b.id === brandId);
 
   const [coatings, setCoatings] = useState([]);
@@ -223,6 +228,7 @@ export default function BrandMetaPage({ supplierType }) {
       await updateBrandMeta(brandId, { coatings, colors });
       toast.success('Brand metadata saved');
       setDirty(false);
+      queryClient.invalidateQueries({ queryKey: brandsKey });
     } catch (err) {
       toast.error(err.message || 'Failed to save');
     } finally {

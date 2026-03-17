@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import GridEditor from '../components/gridEditor/GridEditor';
 import GridToolbar from '../components/gridEditor/GridToolbar';
 import DiameterPanel from '../components/gridEditor/DiameterPanel';
@@ -13,17 +14,20 @@ import { useToast } from '../hooks/useToast';
 import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getBrands } from '../services/brandsService';
 import { getIvlLens } from '../services/ivlLensesService';
+import { queryKeys } from '../lib/queryKeys';
 
 export default function GridEditorPage() {
   const { supplierId, brandId, lensId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [pageLoading, setPageLoading] = useState(true);
-  const [supplier, setSupplier] = useState(null);
-  const [brand, setBrand] = useState(null);
-  const [lens, setLens] = useState(null);
   const [eraseAllOpen, setEraseAllOpen] = useState(false);
+  const [gridLoaded, setGridLoaded] = useState(false);
+
+  const { data: supplier } = useQuery({ queryKey: queryKeys.ivlSupplier(supplierId), queryFn: () => getIvlSupplier(supplierId) });
+  const { data: brands = [] } = useQuery({ queryKey: queryKeys.brands(supplierId), queryFn: () => getBrands(supplierId) });
+  const brand = brands.find(b => b.id === brandId) || null;
+  const { data: lens, isLoading: lensLoading } = useQuery({ queryKey: queryKeys.ivlLens(lensId), queryFn: () => getIvlLens(supplierId, brandId, lensId) });
 
   const {
     cells,
@@ -47,25 +51,16 @@ export default function GridEditorPage() {
   } = useGridEditor();
 
   useEffect(() => {
-    async function init() {
-      setPageLoading(true);
+    if (gridLoaded) return;
+    async function initGrid() {
       try {
-        const [sup, brandsArr, l] = await Promise.all([
-          getIvlSupplier(supplierId),
-          getBrands(supplierId),
-          getIvlLens(supplierId, brandId, lensId),
-        ]);
-        setSupplier(sup);
-        setBrand(brandsArr.find(b => b.id === brandId) || null);
-        setLens(l);
         await loadFromFirestore(supplierId, brandId, lensId);
+        setGridLoaded(true);
       } catch (err) {
         toast.error(err.message || 'Failed to load grid');
-      } finally {
-        setPageLoading(false);
       }
     }
-    init();
+    initGrid();
   }, [supplierId, brandId, lensId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSave() {
@@ -77,7 +72,7 @@ export default function GridEditorPage() {
     }
   }
 
-  if (pageLoading) return <Spinner full />;
+  if (lensLoading || !gridLoaded) return <Spinner full />;
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>

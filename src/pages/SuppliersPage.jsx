@@ -7,22 +7,26 @@ import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import SupplierForm from '../components/suppliers/SupplierForm';
 import SearchInput from '../components/ui/SearchInput';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getIvlSuppliers, deleteIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSuppliers, deleteContactSupplier } from '../services/contactSuppliersService';
-import { useFirestoreCollection } from '../hooks/useFirestore';
+import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
 
 export default function SuppliersPage({ supplierType }) {
   const toast = useToast();
   const navigate = useNavigate();
 
+  const queryClient = useQueryClient();
+
   const isIvl = supplierType === 'ivl';
   const basePath = isIvl ? '/ivl-suppliers' : '/contact-suppliers';
   const pageTitle = isIvl ? 'IVL Suppliers' : 'Contact Suppliers';
   const getFn = isIvl ? getIvlSuppliers : getContactSuppliers;
   const deleteFn = isIvl ? deleteIvlSupplier : deleteContactSupplier;
+  const key = isIvl ? queryKeys.ivlSuppliers() : queryKeys.contactSuppliers();
 
-  const { data: suppliers, loading, reload } = useFirestoreCollection(getFn, [supplierType]);
+  const { data: suppliers = [], isLoading: loading } = useQuery({ queryKey: key, queryFn: getFn });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -50,7 +54,7 @@ export default function SuppliersPage({ supplierType }) {
     try {
       await deleteFn(deleteTarget.id);
       toast.success(`"${deleteTarget.name}" deleted`);
-      reload();
+      queryClient.invalidateQueries({ queryKey: key });
     } catch (err) {
       toast.error(err.message || 'Failed to delete supplier');
     } finally {
@@ -146,7 +150,7 @@ export default function SuppliersPage({ supplierType }) {
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
         supplier={editTarget}
-        onSaved={reload}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: key })}
         supplierType={supplierType}
       />
 
