@@ -19,7 +19,7 @@ function StepHeader({ number, title }) {
     </div>
   );
 }
-import { downloadIvlTemplate, downloadContactTemplate } from '../utils/csvTemplates';
+import { downloadIvlStockTemplate, downloadIvlRxTemplate, downloadContactTemplate } from '../utils/csvTemplates';
 import { parseFile, validateRows, importValidRows } from '../services/importParser';
 import { useToast } from '../hooks/useToast';
 
@@ -118,6 +118,24 @@ function ValidationTable({ rows }) {
   );
 }
 
+const TEMPLATE_DOWNLOAD = {
+  'ivl-stock': downloadIvlStockTemplate,
+  'ivl-rx': downloadIvlRxTemplate,
+  'contact': downloadContactTemplate,
+};
+
+const TEMPLATE_LABEL = {
+  'ivl-stock': 'IVL Stock Template',
+  'ivl-rx': 'IVL RX Template',
+  'contact': 'Contact Lens Template',
+};
+
+const LENS_LABEL = {
+  'ivl-stock': 'IVL Stock',
+  'ivl-rx': 'IVL RX',
+  'contact': 'Contact',
+};
+
 function ImportTab({ type }) {
   const toast = useToast();
   const [file, setFile] = useState(null);
@@ -126,7 +144,7 @@ function ImportTab({ type }) {
   const [importProgress, setImportProgress] = useState(null);
   const [validatedRows, setValidatedRows] = useState(null);
 
-  const isIvl = type === 'ivl';
+  const isRx = type === 'ivl-rx';
 
   async function handleValidate() {
     if (!file) return;
@@ -146,10 +164,11 @@ function ImportTab({ type }) {
   async function handleImport() {
     if (!validatedRows) return;
     setImporting(true);
-    setImportProgress({ current: 0, total: validatedRows.filter(r => r.valid).length });
+    const validCount = validatedRows.filter(r => r.valid).length;
+    setImportProgress({ current: 0, total: validCount });
     try {
       const count = await importValidRows(validatedRows, type);
-      toast.success(`Successfully imported ${count} ${isIvl ? 'IVL' : 'contact'} lens${count !== 1 ? 'es' : ''}`);
+      toast.success(`Successfully imported ${count} ${LENS_LABEL[type]} lens${count !== 1 ? 'es' : ''}`);
       setFile(null);
       setValidatedRows(null);
       setImportProgress(null);
@@ -168,14 +187,13 @@ function ImportTab({ type }) {
       <section style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', padding: '24px 28px' }}>
         <StepHeader number={1} title="Download Template" />
         <p style={{ fontSize: 14, color: '#64748b', marginBottom: 16, marginTop: 0 }}>
-          Download the CSV template with all required columns and an example row.
+          {isRx
+            ? 'Each row represents one variant. Master fields (supplier → color) repeat for each variant of the same lens. Rows sharing the same supplier, brand, and productName are grouped into one lens on import.'
+            : 'Download the CSV template with all required columns and an example row.'}
         </p>
-        <Button
-          variant="secondary"
-          onClick={isIvl ? downloadIvlTemplate : downloadContactTemplate}
-        >
+        <Button variant="secondary" onClick={TEMPLATE_DOWNLOAD[type]}>
           <Download size={16} />
-          Download {isIvl ? 'IVL' : 'Contact'} Template
+          Download {TEMPLATE_LABEL[type]}
         </Button>
       </section>
 
@@ -207,12 +225,17 @@ function ImportTab({ type }) {
       {/* Step 4 */}
       <section style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', padding: '24px 28px' }}>
         <StepHeader number={4} title="Import Valid Rows" />
+        {isRx && validCount > 0 && (
+          <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12, marginTop: 0 }}>
+            {validCount} valid variant row{validCount !== 1 ? 's' : ''} will be grouped by product name and imported as lenses.
+          </p>
+        )}
         <Button
           disabled={validCount === 0 || importing}
           loading={importing}
           onClick={handleImport}
         >
-          Import {validCount > 0 ? `${validCount} Valid` : ''} Rows
+          Import {validCount > 0 ? `${validCount} Valid` : ''} {isRx ? 'Variant ' : ''}Rows
         </Button>
         {importProgress && (
           <div style={{ marginTop: 16 }}>
@@ -235,37 +258,65 @@ function ImportTab({ type }) {
   );
 }
 
+const TAB_STYLE = (active) => ({
+  padding: '12px 24px', fontSize: 14, fontWeight: 600,
+  border: 'none', background: 'none', cursor: 'pointer',
+  borderBottom: active ? '2px solid #0f2540' : '2px solid transparent',
+  color: active ? '#0f2540' : '#64748b',
+  marginBottom: -1,
+  transition: 'color 0.15s, border-color 0.15s',
+});
+
 export default function ImportPage() {
   const [activeTab, setActiveTab] = useState('ivl');
+  const [ivlSubTab, setIvlSubTab] = useState('ivl-stock');
+
+  const activeType = activeTab === 'ivl' ? ivlSubTab : 'contact';
 
   return (
     <>
       <Header title="Bulk Import" />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
         <div className="page-content" style={{ maxWidth: 860, margin: '0 auto', padding: '36px 40px' }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 32 }}>
+          {/* Top tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 0 }}>
             {[
               { id: 'ivl', label: 'IVL Lenses' },
               { id: 'contact', label: 'Contact Lenses' },
             ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '12px 24px', fontSize: 14, fontWeight: 600,
-                  border: 'none', background: 'none', cursor: 'pointer',
-                  borderBottom: activeTab === tab.id ? '2px solid #0f2540' : '2px solid transparent',
-                  color: activeTab === tab.id ? '#0f2540' : '#64748b',
-                  marginBottom: -1,
-                  transition: 'color 0.15s, border-color 0.15s',
-                }}
-              >
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={TAB_STYLE(activeTab === tab.id)}>
                 {tab.label}
               </button>
             ))}
           </div>
-          <ImportTab key={activeTab} type={activeTab} />
+
+          {/* IVL sub-tabs */}
+          {activeTab === 'ivl' && (
+            <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 32, background: '#f8fafc' }}>
+              {[
+                { id: 'ivl-stock', label: 'Stock' },
+                { id: 'ivl-rx', label: 'RX' },
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => setIvlSubTab(sub.id)}
+                  style={{
+                    ...TAB_STYLE(ivlSubTab === sub.id),
+                    padding: '9px 20px',
+                    fontSize: 13,
+                    borderBottom: ivlSubTab === sub.id ? '2px solid #1e3a5f' : '2px solid transparent',
+                    color: ivlSubTab === sub.id ? '#1e3a5f' : '#94a3b8',
+                  }}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'contact' && <div style={{ marginBottom: 32 }} />}
+
+          <ImportTab key={activeType} type={activeType} />
         </div>
       </div>
     </>

@@ -1,7 +1,7 @@
 /**
- * Returns the column headers for the IVL lens import template.
+ * Returns the column headers for the IVL Stock lens import template.
  */
-export function getIvlTemplateHeaders() {
+export function getIvlStockTemplateHeaders() {
   return [
     'supplier',
     'brand',
@@ -9,11 +9,40 @@ export function getIvlTemplateHeaders() {
     'design',
     'material',
     'lensTypes',
-    'availability',
     'refractiveIndex',
     'geometry',
     'coating',
     'color',
+    'cylFormat',
+    'wholesalePrice',
+    'retailPrice',
+  ];
+}
+
+/**
+ * Returns the column headers for the IVL RX lens import template.
+ * Each row represents one variant. Master fields (supplier → color) repeat per variant.
+ */
+export function getIvlRxTemplateHeaders() {
+  return [
+    'supplier',
+    'brand',
+    'productName',
+    'design',
+    'material',
+    'lensTypes',
+    'refractiveIndex',
+    'geometry',
+    'coating',
+    'color',
+    'diameterMode',
+    'diameterValue',
+    'diameterFrom',
+    'diameterTo',
+    'sphMin',
+    'sphMax',
+    'cylMin',
+    'cylMax',
     'cylFormat',
     'wholesalePrice',
     'retailPrice',
@@ -52,17 +81,16 @@ export function getContactTemplateHeaders() {
 }
 
 /**
- * Returns an example row for the IVL template.
+ * Returns an example row for the IVL Stock template.
  */
-function getIvlExampleRow() {
+function getIvlStockExampleRow() {
   return [
     'Acme Optics',
     'ClearVision',
     'UltraClear 1.60',
     'single_vision',
     'plastic',
-    'clear,photochromic',
-    'stock',
+    'clear',
     '1.60',
     'as',
     'AR + HC',
@@ -70,6 +98,17 @@ function getIvlExampleRow() {
     'minus',
     '12.50',
     '25.00',
+  ];
+}
+
+/**
+ * Returns example rows for the IVL RX template (1 lens with 2 variants).
+ */
+function getIvlRxExampleRows() {
+  const master = ['Acme Optics', 'ClearVision', 'UltraClear RX 1.60', 'single_vision', 'plastic', 'clear', '1.60', 'as', 'AR + HC', ''];
+  return [
+    [...master, 'single', '65', '', '', '-6.00', '+4.00', '-2.00', '0.00', 'minus', '14.00', '28.00'],
+    [...master, 'range',  '',  '65', '75', '-8.00', '+6.00', '-4.00', '0.00', 'minus', '16.00', '32.00'],
   ];
 }
 
@@ -124,8 +163,24 @@ export function downloadTemplate(filename, headers, exampleRow = []) {
   URL.revokeObjectURL(url);
 }
 
-export function downloadIvlTemplate() {
-  downloadTemplate('ivl_lenses_template.csv', getIvlTemplateHeaders(), getIvlExampleRow());
+export function downloadIvlStockTemplate() {
+  downloadTemplate('ivl_stock_template.csv', getIvlStockTemplateHeaders(), getIvlStockExampleRow());
+}
+
+export function downloadIvlRxTemplate() {
+  const headers = getIvlRxTemplateHeaders();
+  const exampleRows = getIvlRxExampleRows();
+  const rows = [headers, ...exampleRows];
+  const csvContent = rows.map(row => row.map(escapeCell).join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'ivl_rx_template.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function downloadContactTemplate() {

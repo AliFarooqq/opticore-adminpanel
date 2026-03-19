@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
-import { validateIvlRow, validateContactRow } from '../utils/validation';
+import { validateIvlRow, validateIvlStockRow, validateIvlRxRow, validateContactRow } from '../utils/validation';
 
 const _getSuppliersAndBrands = httpsCallable(functions, 'getSuppliersAndBrands');
 const _bulkImportLenses = httpsCallable(functions, 'bulkImportLenses');
@@ -61,16 +61,22 @@ export async function validateRows(rows, type) {
   const { suppliers, brands } = result.data;
 
   return rows.map((row, index) => {
-    const validation =
-      type === 'ivl'
-        ? validateIvlRow(row, suppliers, brands)
-        : validateContactRow(row, suppliers, brands);
+    let validation;
+    if (type === 'ivl-stock') {
+      validation = validateIvlStockRow(row);
+    } else if (type === 'ivl-rx') {
+      validation = validateIvlRxRow(row);
+    } else if (type === 'ivl') {
+      validation = validateIvlRow(row, suppliers, brands);
+    } else {
+      validation = validateContactRow(row, suppliers, brands);
+    }
 
     return {
       rowNumber: index + 2,
       supplier: row.supplier || '',
       brand: row.brand || '',
-      productName: row.productName || '',
+      productName: row.productname || row.productName || '',
       ...validation,
       raw: row,
     };
@@ -80,10 +86,24 @@ export async function validateRows(rows, type) {
 // ── Import ─────────────────────────────────────────────────────────────────────
 
 export async function importValidRows(validatedRows, type) {
-  const validRows = validatedRows
-    .filter(r => r.valid)
-    .map(r => ({ supplier: r.supplier, brand: r.brand, raw: r.raw }));
+  const validRows = validatedRows.filter(r => r.valid);
 
-  const result = await _bulkImportLenses({ rows: validRows, type });
+  let rows;
+  if (type === 'ivl-rx') {
+    // Group variant rows by supplier + brand + productName → one lens per group
+    const groups = {};
+    for (const row of validRows) {
+      const key = `${row.supplier}|${row.brand}|${row.raw.productname}`;
+      if (!groups[key]) {
+        groups[key] = { supplier: row.supplier, brand: row.brand, raw: row.raw, variants: [] };
+      }
+      groups[key].variants.push(row.raw);
+    }
+    rows = Object.values(groups);
+  } else {
+    rows = validRows.map(r => ({ supplier: r.supplier, brand: r.brand, raw: r.raw }));
+  }
+
+  const result = await _bulkImportLenses({ rows, type });
   return result.data.imported;
 }
