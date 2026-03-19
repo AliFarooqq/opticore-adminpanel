@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Download, FileText, CheckCircle, XCircle, X } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Button from '../components/ui/Button';
-import Spinner from '../components/ui/Spinner';
 
 function StepHeader({ number, title }) {
   return (
@@ -23,7 +22,7 @@ import { downloadIvlStockTemplate, downloadIvlRxTemplate, downloadContactTemplat
 import { parseFile, validateRows, importValidRows } from '../services/importParser';
 import { useToast } from '../hooks/useToast';
 
-function DropZone({ onFile, file }) {
+function DropZone({ onFile, file, onRemove }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
@@ -34,81 +33,129 @@ function DropZone({ onFile, file }) {
     if (f) onFile(f);
   }
 
+  if (file) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 18px', borderRadius: 12,
+        border: '1.5px solid #c7d7ed', background: '#f0f5fb',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <FileText size={18} style={{ color: '#2563eb' }} />
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', margin: 0 }}>{file.name}</p>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>
+              {(file.size / 1024).toFixed(1)} KB
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onRemove}
+          title="Remove file"
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: 'none',
+            background: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#94a3b8', transition: 'background 0.15s, color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}
+        >
+          <X size={16} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={() => inputRef.current?.click()}
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
-      className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer transition-colors
-        ${dragging ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'}`}
+      style={{
+        border: `2px dashed ${dragging ? '#3b82f6' : '#cbd5e1'}`,
+        borderRadius: 12,
+        padding: '40px 24px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        cursor: 'pointer',
+        background: dragging ? '#eff6ff' : '#f8fafc',
+        transition: 'border-color 0.15s, background 0.15s',
+      }}
     >
-      <Upload size={28} className={dragging ? 'text-blue-500' : 'text-slate-400'} />
-      {file ? (
-        <div className="flex items-center gap-2 text-slate-700">
-          <FileText size={16} />
-          <span className="text-sm font-medium">{file.name}</span>
-        </div>
-      ) : (
-        <>
-          <p className="text-sm text-slate-600 font-medium">Drop CSV or Excel file here</p>
-          <p className="text-xs text-slate-400">or click to browse (.csv, .xlsx, .xls)</p>
-        </>
-      )}
+      <div style={{ width: 48, height: 48, borderRadius: 12, background: dragging ? '#dbeafe' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}>
+        <Upload size={22} style={{ color: dragging ? '#3b82f6' : '#94a3b8' }} />
+      </div>
+      <p style={{ fontSize: 14, fontWeight: 600, color: '#374151', margin: 0 }}>
+        {dragging ? 'Drop file here' : 'Drop CSV or Excel file here'}
+      </p>
+      <p style={{ fontSize: 13, color: '#94a3b8', margin: 0 }}>or click to browse — .csv, .xlsx, .xls</p>
       <input
         ref={inputRef}
         type="file"
         accept=".csv,.xlsx,.xls"
-        className="hidden"
+        style={{ display: 'none' }}
         onChange={e => { if (e.target.files[0]) onFile(e.target.files[0]); }}
       />
     </div>
   );
 }
 
+const TH = {
+  textAlign: 'left', padding: '10px 14px',
+  fontSize: 11, fontWeight: 700, color: '#94a3b8',
+  textTransform: 'uppercase', letterSpacing: '0.07em',
+  whiteSpace: 'nowrap', background: '#f8fafc',
+  borderBottom: '1.5px solid #e2e8f0',
+  position: 'sticky', top: 0, zIndex: 1,
+};
+const TD = { padding: '10px 14px', fontSize: 12, color: '#374151', whiteSpace: 'nowrap', borderBottom: '1px solid #f1f5f9', verticalAlign: 'middle' };
+
 function ValidationTable({ rows }) {
   const valid = rows.filter(r => r.valid).length;
   const errors = rows.length - valid;
+  const dataColumns = rows[0]?.raw ? Object.keys(rows[0].raw) : [];
 
   return (
     <div>
-      <p className="text-sm text-slate-600 mb-3">
-        <span className="text-green-600 font-semibold">{valid} valid rows</span>
-        {errors > 0 && (
-          <>, <span className="text-red-600 font-semibold">{errors} errors</span></>
-        )}
-      </p>
-      <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-96">
-        <table className="w-full text-xs">
-          <thead className="bg-slate-50 sticky top-0">
+      <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#16a34a' }}>{valid} valid</span>
+        {errors > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>{errors} error{errors !== 1 ? 's' : ''}</span>}
+        <span style={{ fontSize: 13, color: '#94a3b8' }}>{rows.length} total rows</span>
+      </div>
+      <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #e2e8f0', maxHeight: 420 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
             <tr>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Row</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Supplier</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Brand</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Product Name</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Status</th>
-              <th className="text-left px-3 py-2 text-slate-500 font-semibold">Error</th>
+              <th style={{ ...TH, width: 48 }}>#</th>
+              {dataColumns.map(col => (
+                <th key={col} style={TH}>{col}</th>
+              ))}
+              <th style={{ ...TH, width: 80 }}>Status</th>
+              <th style={TH}>Error</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {rows.map(row => (
-              <tr key={row.rowNumber} className={row.valid ? '' : 'bg-red-50'}>
-                <td className="px-3 py-2 text-slate-500">{row.rowNumber}</td>
-                <td className="px-3 py-2 text-slate-700">{row.supplier}</td>
-                <td className="px-3 py-2 text-slate-700">{row.brand}</td>
-                <td className="px-3 py-2 text-slate-700">{row.productName}</td>
-                <td className="px-3 py-2">
+              <tr key={row.rowNumber} style={{ background: row.valid ? 'transparent' : '#fff5f5' }}>
+                <td style={{ ...TD, color: '#94a3b8' }}>{row.rowNumber}</td>
+                {dataColumns.map(col => (
+                  <td key={col} style={TD}>{row.raw[col] || <span style={{ color: '#cbd5e1' }}>—</span>}</td>
+                ))}
+                <td style={TD}>
                   {row.valid ? (
-                    <span className="flex items-center gap-1 text-green-600">
-                      <CheckCircle size={14} /> Valid
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#16a34a', fontWeight: 600 }}>
+                      <CheckCircle size={13} /> Valid
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-red-600">
-                      <XCircle size={14} /> Error
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#dc2626', fontWeight: 600 }}>
+                      <XCircle size={13} /> Error
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-red-600">{row.error || ''}</td>
+                <td style={{ ...TD, color: '#dc2626', maxWidth: 260, whiteSpace: 'normal' }}>{row.error || ''}</td>
               </tr>
             ))}
           </tbody>
@@ -200,7 +247,11 @@ function ImportTab({ type }) {
       {/* Step 2 */}
       <section style={{ background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', padding: '24px 28px' }}>
         <StepHeader number={2} title="Upload Your File" />
-        <DropZone file={file} onFile={f => { setFile(f); setValidatedRows(null); }} />
+        <DropZone
+          file={file}
+          onFile={f => { setFile(f); setValidatedRows(null); }}
+          onRemove={() => { setFile(null); setValidatedRows(null); }}
+        />
       </section>
 
       {/* Step 3 */}
@@ -214,7 +265,6 @@ function ImportTab({ type }) {
         >
           Validate File
         </Button>
-        {validating && <Spinner size="sm" />}
         {validatedRows && (
           <div style={{ marginTop: 20 }}>
             <ValidationTable rows={validatedRows} />
@@ -277,7 +327,7 @@ export default function ImportPage() {
     <>
       <Header title="Bulk Import" />
       <div style={{ flex: 1, overflowY: 'auto', background: '#f1f5f9' }}>
-        <div className="page-content" style={{ maxWidth: 860, margin: '0 auto', padding: '36px 40px' }}>
+        <div className="page-content" style={{ maxWidth: 1300, margin: '0 auto', padding: '36px 40px' }}>
           {/* Top tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 0 }}>
             {[
