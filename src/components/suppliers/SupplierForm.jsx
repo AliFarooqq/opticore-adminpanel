@@ -8,7 +8,7 @@ import { createIvlSupplier, updateIvlSupplier, uploadIvlSupplierLogo } from '../
 import { createContactSupplier, updateContactSupplier, uploadContactSupplierLogo } from '../../services/contactSuppliersService';
 import { useToast } from '../../hooks/useToast';
 
-export default function SupplierForm({ isOpen, onClose, supplier, onSaved, supplierType }) {
+export default function SupplierForm({ isOpen, onClose, supplier, onSaved, supplierType, initialName = '' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
@@ -21,7 +21,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: supplier?.name || '',
+      name: supplier?.name || initialName,
       email: supplier?.email || '',
       phone: supplier?.phone || '',
       website: supplier?.website || '',
@@ -31,7 +31,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
   useEffect(() => {
     if (isOpen) {
       reset({
-        name: supplier?.name || '',
+        name: supplier?.name || initialName,
         email: supplier?.email || '',
         phone: supplier?.phone || '',
         website: supplier?.website || '',
@@ -39,7 +39,7 @@ export default function SupplierForm({ isOpen, onClose, supplier, onSaved, suppl
       setLogoFile(null);
       setLogoPreview(supplier?.logoUrl || '');
     }
-  }, [isOpen, supplier, reset]);
+  }, [isOpen, supplier, initialName, reset]);
 
   function handleLogoChange(e) {
     const file = e.target.files[0];

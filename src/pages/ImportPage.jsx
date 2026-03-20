@@ -209,13 +209,13 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {isSupplierField && !isWrongType && (
-          <PopoverButton primary onClick={() => { onCreateSupplier(); onClose(); }}>
+          <PopoverButton primary onClick={() => { onCreateSupplier(row.raw.supplier); onClose(); }}>
             + Create "{row.raw.supplier}" as {supplierTypeLabel} Supplier
           </PopoverButton>
         )}
 
         {isBrandField && supplierObj && (
-          <PopoverButton primary onClick={() => { onOpenCreateBrand(supplierObj.id); onClose(); }}>
+          <PopoverButton primary onClick={() => { onOpenCreateBrand(supplierObj.id, row.raw.brand); onClose(); }}>
             + Create "{row.raw.brand}" under {row.raw.supplier}
           </PopoverButton>
         )}
@@ -414,8 +414,8 @@ function ImportTab({ type }) {
   const closePopover = useCallback(() => setActivePopover(null), []);
 
   // Modals
-  const [supplierModal, setSupplierModal] = useState(false);
-  const [brandModal, setBrandModal] = useState(null); // { supplierId }
+  const [supplierModal, setSupplierModal] = useState(null); // { initialName } | null
+  const [brandModal, setBrandModal] = useState(null); // { supplierId, initialName }
   const [editRowModal, setEditRowModal] = useState(null); // rowIdx
 
   const isRx = type === 'ivl-rx';
@@ -603,18 +603,19 @@ function ImportTab({ type }) {
         type={type}
         onClose={closePopover}
         onSkipRow={handleSkipRowFromPopover}
-        onCreateSupplier={() => setSupplierModal(true)}
-        onOpenCreateBrand={(supplierId) => setBrandModal({ supplierId })}
+        onCreateSupplier={(name) => setSupplierModal({ initialName: name || '' })}
+        onOpenCreateBrand={(supplierId, name) => setBrandModal({ supplierId, initialName: name || '' })}
         onUseDifferentBrand={handleUseDifferentBrand}
         onOpenEditRow={(rowIdx) => setEditRowModal(rowIdx)}
       />
 
       {/* Create Supplier Modal */}
       <SupplierForm
-        isOpen={supplierModal}
-        onClose={() => setSupplierModal(false)}
+        isOpen={!!supplierModal}
+        onClose={() => setSupplierModal(null)}
         supplier={null}
         supplierType={supplierTypeForForm}
+        initialName={supplierModal?.initialName || ''}
         onSaved={handleRefetchAndRevalidate}
       />
 
@@ -625,6 +626,7 @@ function ImportTab({ type }) {
           onClose={() => setBrandModal(null)}
           supplierId={brandModal.supplierId}
           brand={null}
+          initialName={brandModal.initialName || ''}
           onSaved={handleRefetchAndRevalidate}
         />
       )}

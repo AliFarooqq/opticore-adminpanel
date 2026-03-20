@@ -6,7 +6,7 @@ import Input from '../ui/Input';
 import { createBrand, updateBrand } from '../../services/brandsService';
 import { useToast } from '../../hooks/useToast';
 
-export default function BrandForm({ isOpen, onClose, supplierId, brand, onSaved }) {
+export default function BrandForm({ isOpen, onClose, supplierId, brand, onSaved, initialName = '' }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -15,11 +15,11 @@ export default function BrandForm({ isOpen, onClose, supplierId, brand, onSaved 
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({ defaultValues: { name: brand?.name || '' } });
+  } = useForm({ defaultValues: { name: brand?.name || initialName } });
 
   useEffect(() => {
-    if (isOpen) reset({ name: brand?.name || '' });
-  }, [isOpen, brand, reset]);
+    if (isOpen) reset({ name: brand?.name || initialName });
+  }, [isOpen, brand, initialName, reset]);
 
   async function onSubmit({ name }) {
     setLoading(true);
