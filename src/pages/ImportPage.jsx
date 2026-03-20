@@ -8,6 +8,7 @@ import BrandForm from '../components/brands/BrandForm';
 import ImportRowEditForm from '../components/import/ImportRowEditForm';
 import { downloadIvlStockTemplate, downloadIvlRxTemplate, downloadContactTemplate } from '../utils/csvTemplates';
 import { parseFile, fetchRefData, validateRows, revalidateSingleRow, importValidRows } from '../services/importParser';
+import { updateBrandMeta } from '../services/brandsService';
 import { useToast } from '../hooks/useToast';
 
 // ── Shared style constants ────────────────────────────────────────────────────
@@ -150,8 +151,9 @@ function PopoverButton({ onClick, children, primary }) {
 
 // ── Cell Popover (portal) ─────────────────────────────────────────────────────
 
-function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreateSupplier, onOpenCreateBrand, onUseDifferentBrand, onOpenEditRow }) {
+function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreateSupplier, onOpenCreateBrand, onUseDifferentBrand, onOpenEditRow, onAddCoatingToBrand, onAddColorToBrand }) {
   const popoverRef = useRef(null);
+  const [blueBlock, setBlueBlock] = useState(false);
 
   useEffect(() => {
     if (!popover) return;
@@ -164,6 +166,9 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
     return () => document.removeEventListener('mousedown', onMouseDown);
   }, [popover, onClose]);
 
+  // Reset blue block toggle whenever a different cell is opened
+  useEffect(() => { setBlueBlock(false); }, [popover?.rowIdx, popover?.field]);
+
   if (!popover) return null;
 
   const { rowIdx, field, rect } = popover;
@@ -174,25 +179,37 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
   if (!error) return null;
 
   const isSupplierField = field === 'supplier';
-  const isBrandField = field === 'brand';
-  const isWrongType = isSupplierField && error.includes('wrong type');
+  const isBrandField    = field === 'brand';
+  const isCoatingField  = field === 'coating';
+  const isColorField    = field === 'color';
+  const isWrongType     = isSupplierField && error.includes('wrong type');
   const supplierTypeLabel = type === 'contact' ? 'Contact' : 'IVL';
 
+  // Brand lookup for brand-field actions
   let supplierObj = null;
   let availableBrands = [];
   if (isBrandField && refData) {
-    const name = row.raw.supplier?.toLowerCase();
-    supplierObj = refData.suppliers.find(s => s.name.toLowerCase() === name);
-    if (supplierObj) {
-      availableBrands = refData.brands.filter(b => b.supplierId === supplierObj.id);
+    const sName = row.raw.supplier?.toLowerCase();
+    supplierObj = refData.suppliers.find(s => s.name.toLowerCase() === sName);
+    if (supplierObj) availableBrands = refData.brands.filter(b => b.supplierId === supplierObj.id);
+  }
+
+  // Brand object lookup for coating/color actions
+  let brandForRow = null;
+  if ((isCoatingField || isColorField) && refData) {
+    const sName = row.raw.supplier?.toLowerCase();
+    const sObj  = refData.suppliers.find(s => s.name.toLowerCase() === sName);
+    if (sObj) {
+      const bName = row.raw.brand?.toLowerCase();
+      brandForRow = refData.brands.find(b => b.name.toLowerCase() === bName && b.supplierId === sObj.id);
     }
   }
 
   // Position below-left of the cell, keep inside viewport
-  let top = rect.bottom + 8;
+  let top  = rect.bottom + 8;
   let left = rect.left;
   if (left + 300 > window.innerWidth - 8) left = window.innerWidth - 308;
-  if (top + 240 > window.innerHeight - 8) top = rect.top - 240 - 8;
+  if (top  + 280 > window.innerHeight - 8) top  = rect.top - 280 - 8;
 
   return createPortal(
     <div
@@ -208,18 +225,20 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
         ⚠ {error}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+
+        {/* Supplier actions */}
         {isSupplierField && !isWrongType && (
           <PopoverButton primary onClick={() => { onCreateSupplier(row.raw.supplier); onClose(); }}>
             + Create "{row.raw.supplier}" as {supplierTypeLabel} Supplier
           </PopoverButton>
         )}
 
+        {/* Brand actions */}
         {isBrandField && supplierObj && (
           <PopoverButton primary onClick={() => { onOpenCreateBrand(supplierObj.id, row.raw.brand); onClose(); }}>
             + Create "{row.raw.brand}" under {row.raw.supplier}
           </PopoverButton>
         )}
-
         {isBrandField && availableBrands.length > 0 && (
           <div>
             <p style={{ fontSize: 11, color: '#94a3b8', margin: '6px 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -228,10 +247,7 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
             <select
               defaultValue=""
               onChange={e => { if (e.target.value) { onUseDifferentBrand(rowIdx, e.target.value); onClose(); } }}
-              style={{
-                width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12,
-                background: '#334155', border: '1px solid #475569', color: '#f1f5f9', cursor: 'pointer',
-              }}
+              style={{ width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12, background: '#334155', border: '1px solid #475569', color: '#f1f5f9', cursor: 'pointer' }}
             >
               <option value="">— select brand —</option>
               {availableBrands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
@@ -239,20 +255,50 @@ function CellPopover({ popover, rows, refData, type, onClose, onSkipRow, onCreat
           </div>
         )}
 
+        {/* Coating actions */}
+        {isCoatingField && brandForRow && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 2px' }}>
+              <button
+                onClick={() => setBlueBlock(v => !v)}
+                style={{
+                  fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                  background: blueBlock ? '#dbeafe' : '#334155',
+                  color: blueBlock ? '#1d4ed8' : '#94a3b8',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                Blue Block {blueBlock ? '✓' : '○'}
+              </button>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>blue light protection</span>
+            </div>
+            <PopoverButton primary onClick={() => { onAddCoatingToBrand(rowIdx, blueBlock); onClose(); }}>
+              + Add "{row.raw.coating}" to {brandForRow.name}
+            </PopoverButton>
+          </>
+        )}
+
+        {/* Color actions */}
+        {isColorField && brandForRow && (
+          <PopoverButton primary onClick={() => { onAddColorToBrand(rowIdx); onClose(); }}>
+            + Add "{row.raw.color}" to {brandForRow.name}
+          </PopoverButton>
+        )}
+
+        {/* Edit Row — secondary for coating/color, primary for other format fields */}
         {!isSupplierField && !isBrandField && (
-          <PopoverButton primary onClick={() => { onOpenEditRow(rowIdx); onClose(); }}>
-            ✏ Edit Row Fields
+          <PopoverButton
+            primary={!isCoatingField && !isColorField}
+            onClick={() => { onOpenEditRow(rowIdx); onClose(); }}
+          >
+            ✏ Edit Row
           </PopoverButton>
         )}
 
         {!row.skipped ? (
-          <PopoverButton onClick={() => { onSkipRow(rowIdx); onClose(); }}>
-            Skip this row
-          </PopoverButton>
+          <PopoverButton onClick={() => { onSkipRow(rowIdx); onClose(); }}>Skip this row</PopoverButton>
         ) : (
-          <PopoverButton onClick={() => { onSkipRow(rowIdx); onClose(); }}>
-            Undo skip
-          </PopoverButton>
+          <PopoverButton onClick={() => { onSkipRow(rowIdx); onClose(); }}>Undo skip</PopoverButton>
         )}
       </div>
     </div>,
@@ -514,6 +560,76 @@ function ImportTab({ type }) {
     setEditRowModal(null);
   }
 
+  // ── helpers for finding brand object from a row ──────────────────────────
+  function getBrandObjForRow(row) {
+    if (!refData) return null;
+    const sName = row.raw.supplier?.toLowerCase();
+    const sObj  = refData.suppliers.find(s => s.name.toLowerCase() === sName);
+    if (!sObj) return null;
+    const bName = row.raw.brand?.toLowerCase();
+    return refData.brands.find(b => b.name.toLowerCase() === bName && b.supplierId === sObj.id) || null;
+  }
+
+  async function handleAddCoatingToBrand(rowIdx, hasBlueProtection) {
+    const row = validatedRows?.[rowIdx];
+    if (!row) return;
+    const brandObj = getBrandObjForRow(row);
+    if (!brandObj) return;
+    const coatingName = row.raw.coating?.trim();
+    if (!coatingName) return;
+
+    const currentCoatings = brandObj.coatings || [];
+    if (currentCoatings.some(c => c.name.toLowerCase() === coatingName.toLowerCase())) return;
+
+    const newCoatings = [...currentCoatings, { name: coatingName, hasBlueProtection }];
+    try {
+      await updateBrandMeta(brandObj.id, { coatings: newCoatings, colors: brandObj.colors || [] });
+
+      // Update refData in memory immediately — no round-trip needed
+      const updatedBrands = refData.brands.map(b =>
+        b.id === brandObj.id ? { ...b, coatings: newCoatings } : b
+      );
+      const updatedRef = { ...refData, brands: updatedBrands };
+      setRefData(updatedRef);
+      setValidatedRows(prev => prev.map(r => ({
+        ...r,
+        ...revalidateSingleRow(r.raw, type, updatedRef.suppliers, updatedRef.brands),
+      })));
+    } catch (err) {
+      toast.error('Failed to add coating: ' + err.message);
+    }
+  }
+
+  async function handleAddColorToBrand(rowIdx) {
+    const row = validatedRows?.[rowIdx];
+    if (!row) return;
+    const brandObj = getBrandObjForRow(row);
+    if (!brandObj) return;
+    const colorName = row.raw.color?.trim();
+    if (!colorName) return;
+
+    const currentColors = brandObj.colors || [];
+    if (currentColors.some(c => c.toLowerCase() === colorName.toLowerCase())) return;
+
+    const newColors = [...currentColors, colorName];
+    try {
+      await updateBrandMeta(brandObj.id, { coatings: brandObj.coatings || [], colors: newColors });
+
+      // Update refData in memory immediately — no round-trip needed
+      const updatedBrands = refData.brands.map(b =>
+        b.id === brandObj.id ? { ...b, colors: newColors } : b
+      );
+      const updatedRef = { ...refData, brands: updatedBrands };
+      setRefData(updatedRef);
+      setValidatedRows(prev => prev.map(r => ({
+        ...r,
+        ...revalidateSingleRow(r.raw, type, updatedRef.suppliers, updatedRef.brands),
+      })));
+    } catch (err) {
+      toast.error('Failed to add color: ' + err.message);
+    }
+  }
+
   const importableCount = validatedRows?.filter(r => r.valid && !r.skipped).length || 0;
   const progressPct = validatePhase === 'fetching' ? 35 : 85;
 
@@ -607,6 +723,8 @@ function ImportTab({ type }) {
         onOpenCreateBrand={(supplierId, name) => setBrandModal({ supplierId, initialName: name || '' })}
         onUseDifferentBrand={handleUseDifferentBrand}
         onOpenEditRow={(rowIdx) => setEditRowModal(rowIdx)}
+        onAddCoatingToBrand={handleAddCoatingToBrand}
+        onAddColorToBrand={handleAddColorToBrand}
       />
 
       {/* Create Supplier Modal */}

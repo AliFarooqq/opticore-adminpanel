@@ -240,11 +240,33 @@ export default function ImportRowEditForm({ isOpen, onClose, row, type, onSave }
   const [cellErrors, setCellErrors] = useState(row.cellErrors || {});
 
   function setField(key, value) {
-    setFields(prev => ({ ...prev, [key]: value }));
+    setFields(prev => {
+      const next = { ...prev, [key]: value };
+      if (key === 'diametermode') {
+        if (value === 'single') { next.diameterfrom = ''; next.diameterto = ''; }
+        if (value === 'range')  { next.diametervalue = ''; }
+      }
+      return next;
+    });
     setCellErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
   function handleSave() {
+    if (type === 'ivl-rx') {
+      const errors = {};
+      if (!fields.diametermode) {
+        errors.diametermode = 'Required';
+      } else if (fields.diametermode === 'single' && !fields.diametervalue) {
+        errors.diametervalue = 'Required for single mode';
+      } else if (fields.diametermode === 'range') {
+        if (!fields.diameterfrom) errors.diameterfrom = 'Required for range mode';
+        if (!fields.diameterto)   errors.diameterto   = 'Required for range mode';
+      }
+      if (Object.keys(errors).length > 0) {
+        setCellErrors(prev => ({ ...prev, ...errors }));
+        return;
+      }
+    }
     onSave(fields);
   }
 

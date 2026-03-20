@@ -54,6 +54,15 @@ function checkBrand(row, supplierObj, brands, cellErrors) {
 function checkIvlMasterFields(row, suppliers, brands, cellErrors) {
   const supplierObj = checkSupplier(row, suppliers, 'ivl', cellErrors);
   checkBrand(row, supplierObj, brands, cellErrors);
+
+  // Resolve brand object for metadata validation (only when supplier + brand are both valid)
+  let brandObj = null;
+  if (supplierObj && row.brand?.trim() && !cellErrors.brand) {
+    brandObj = brands.find(
+      b => b.name.toLowerCase() === row.brand.trim().toLowerCase() && b.supplierId === supplierObj.id
+    );
+  }
+
   if (!row.productname?.trim()) cellErrors.productname = 'Product name is required';
   if (!DESIGNS.includes(row.design)) cellErrors.design = `Must be one of: ${DESIGNS.join(', ')}`;
   if (!MATERIALS.includes(row.material)) cellErrors.material = `Must be one of: ${MATERIALS.join(', ')}`;
@@ -67,6 +76,22 @@ function checkIvlMasterFields(row, suppliers, brands, cellErrors) {
     cellErrors.refractiveindex = `Must be one of: ${REFRACTIVE_INDICES.join(', ')}`;
   }
   if (!GEOMETRIES.includes(row.geometry)) cellErrors.geometry = `Must be one of: ${GEOMETRIES.join(', ')}`;
+
+  // Coating — only validated when the CF returned the coatings array for this brand
+  if (row.coating?.trim() && brandObj && Array.isArray(brandObj.coatings)) {
+    const exists = brandObj.coatings.some(
+      c => c.name.trim().toLowerCase() === row.coating.trim().toLowerCase()
+    );
+    if (!exists) cellErrors.coating = `Coating "${row.coating}" is not in ${row.brand}'s coatings list`;
+  }
+
+  // Color — only validated when the CF returned the colors array for this brand
+  if (row.color?.trim() && brandObj && Array.isArray(brandObj.colors)) {
+    const exists = brandObj.colors.some(
+      c => c.trim().toLowerCase() === row.color.trim().toLowerCase()
+    );
+    if (!exists) cellErrors.color = `Color "${row.color}" is not in ${row.brand}'s colors list`;
+  }
 }
 
 // ── IVL Stock ─────────────────────────────────────────────────────────────────
