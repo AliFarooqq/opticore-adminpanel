@@ -666,6 +666,12 @@ function ImportTab({ type }) {
           <Download size={16} />
           Download {TEMPLATE_LABEL[type]}
         </Button>
+        <button
+          onClick={() => setShowFieldRef(true)}
+          style={{ display: 'block', marginTop: 10, fontSize: 13, color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          View field reference →
+        </button>
       </section>
 
       {/* Step 2 — Upload */}
