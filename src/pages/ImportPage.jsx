@@ -686,6 +686,16 @@ function ImportTab({ type }) {
           </Button>
         )}
 
+        {fileTypeError && !validating && (
+          <div style={{
+            marginTop: 14, padding: '10px 14px', borderRadius: 8,
+            background: '#fef2f2', border: '1px solid #fecaca',
+            color: '#dc2626', fontSize: 13, lineHeight: 1.5,
+          }}>
+            {fileTypeError}
+          </div>
+        )}
+
         {validating && (
           <div style={{ marginTop: 4 }}>
             <p style={{ fontSize: 13, color: '#475569', marginBottom: 10, margin: '0 0 10px' }}>
