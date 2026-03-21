@@ -88,14 +88,14 @@ function getIvlStockExampleRow() {
     'Acme Optics',
     'ClearVision',
     'UltraClear 1.60',
-    'single_vision',
-    'plastic',
-    'clear',
+    'Single Vision',
+    'Plastic',
+    'Clear',
     '1.60',
-    'as',
+    'AS',
     'AR + HC',
     '',
-    'minus',
+    '-CYL',
     '12.50',
     '25.00',
   ];
@@ -105,10 +105,10 @@ function getIvlStockExampleRow() {
  * Returns example rows for the IVL RX template (1 lens with 2 variants).
  */
 function getIvlRxExampleRows() {
-  const master = ['Acme Optics', 'ClearVision', 'UltraClear RX 1.60', 'single_vision', 'plastic', 'clear', '1.60', 'as', 'AR + HC', ''];
+  const master = ['Acme Optics', 'ClearVision', 'UltraClear RX 1.60', 'Single Vision', 'Plastic', 'Clear', '1.60', 'AS', 'AR + HC', ''];
   return [
-    [...master, 'single', '65', '', '', '-6.00', '+4.00', '-2.00', '0.00', 'minus', '14.00', '28.00'],
-    [...master, 'range',  '',  '65', '75', '-8.00', '+6.00', '-4.00', '0.00', 'minus', '16.00', '32.00'],
+    [...master, 'single', '65', '', '', '-6.00', '+4.00', '-2.00', '0.00', '-CYL', '14.00', '28.00'],
+    [...master, 'range',  '',  '65', '75', '-8.00', '+6.00', '-4.00', '0.00', '-CYL', '16.00', '32.00'],
   ];
 }
 
@@ -120,11 +120,11 @@ function getContactExampleRow() {
     'Acme Optics',
     'AquaLens',
     'AquaSoft Monthly',
-    'clear',
-    'single_vision',
-    'spherical',
-    'monthly',
-    '6_pack',
+    'Clear',
+    'Single Vision',
+    'Spherical',
+    'Monthly',
+    '6 Pack',
     '-6.00',
     '+6.00',
     '0.25',

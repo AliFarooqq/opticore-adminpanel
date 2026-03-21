@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
 import { validateIvlStockRow, validateIvlRxRow, validateContactRow, validateIvlRow } from '../utils/validation';
+import { normalizeRow } from '../utils/importNormalize';
 
 const _getSuppliersAndBrands = httpsCallable(functions, 'getSuppliersAndBrands');
 const _bulkImportLenses = httpsCallable(functions, 'bulkImportLenses');
@@ -71,19 +72,23 @@ function runValidator(row, type, suppliers, brands) {
 }
 
 export function validateRows(rows, type, suppliers, brands) {
-  return rows.map((row, index) => ({
-    rowNumber: index + 2,
-    supplier: row.supplier || '',
-    brand: row.brand || '',
-    productName: row.productname || row.productName || '',
-    skipped: false,
-    ...runValidator(row, type, suppliers, brands),
-    raw: row,
-  }));
+  return rows.map((row, index) => {
+    const normalized = normalizeRow(row, type);
+    return {
+      rowNumber: index + 2,
+      supplier: normalized.supplier || '',
+      brand: normalized.brand || '',
+      productName: normalized.productname || normalized.productName || '',
+      skipped: false,
+      ...runValidator(normalized, type, suppliers, brands),
+      raw: normalized,
+    };
+  });
 }
 
 export function revalidateSingleRow(raw, type, suppliers, brands) {
-  return runValidator(raw, type, suppliers, brands);
+  const normalized = normalizeRow(raw, type);
+  return runValidator(normalized, type, suppliers, brands);
 }
 
 // ── File Type Detection ────────────────────────────────────────────────────────
