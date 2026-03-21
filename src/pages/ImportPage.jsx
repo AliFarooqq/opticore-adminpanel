@@ -793,6 +793,13 @@ function ImportTab({ type }) {
           onSave={handleEditRowSave}
         />
       )}
+
+      {/* Field Reference Modal */}
+      <FieldReferenceModal
+        isOpen={showFieldRef}
+        type={type}
+        onClose={() => setShowFieldRef(false)}
+      />
     </div>
   );
 }
