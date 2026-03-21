@@ -86,6 +86,22 @@ export function revalidateSingleRow(raw, type, suppliers, brands) {
   return runValidator(raw, type, suppliers, brands);
 }
 
+// ── File Type Detection ────────────────────────────────────────────────────────
+
+// Detects the import type by inspecting column headers in the parsed rows.
+// Contact signature: lenscolor, visiontype, etc.
+// RX signature: sphmin, sphmax, cylmin, cylmax, diametermode
+// Stock: everything else (default)
+export function detectFileType(rows) {
+  if (!rows.length) return null;
+  const cols = new Set(Object.keys(rows[0]));
+  const hasContact = ['lenscolor', 'visiontype', 'lensshape', 'wearingtime', 'packtype'].some(c => cols.has(c));
+  if (hasContact) return 'contact';
+  const hasRx = ['sphmin', 'sphmax', 'cylmin', 'cylmax', 'diametermode'].some(c => cols.has(c));
+  if (hasRx) return 'ivl-rx';
+  return 'ivl-stock';
+}
+
 // ── Import ─────────────────────────────────────────────────────────────────────
 
 export async function importValidRows(validatedRows, type) {

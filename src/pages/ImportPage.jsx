@@ -7,7 +7,7 @@ import SupplierForm from '../components/suppliers/SupplierForm';
 import BrandForm from '../components/brands/BrandForm';
 import ImportRowEditForm from '../components/import/ImportRowEditForm';
 import { downloadIvlStockTemplate, downloadIvlRxTemplate, downloadContactTemplate } from '../utils/csvTemplates';
-import { parseFile, fetchRefData, validateRows, revalidateSingleRow, importValidRows } from '../services/importParser';
+import { parseFile, fetchRefData, validateRows, revalidateSingleRow, importValidRows, detectFileType } from '../services/importParser';
 import { updateBrandMeta } from '../services/brandsService';
 import { useToast } from '../hooks/useToast';
 
@@ -456,6 +456,9 @@ function ImportTab({ type }) {
   const [validatedRows, setValidatedRows] = useState(null);
 
   // Popover
+  const [fileTypeError, setFileTypeError] = useState(null);
+
+  // Popover
   const [activePopover, setActivePopover] = useState(null); // { rowIdx, field, rect }
   const closePopover = useCallback(() => setActivePopover(null), []);
 
@@ -655,8 +658,8 @@ function ImportTab({ type }) {
         <StepHeader number={2} title="Upload Your File" />
         <DropZone
           file={file}
-          onFile={f => { setFile(f); setValidatedRows(null); closePopover(); }}
-          onRemove={() => { setFile(null); setValidatedRows(null); closePopover(); }}
+          onFile={f => { setFile(f); setValidatedRows(null); setFileTypeError(null); closePopover(); }}
+          onRemove={() => { setFile(null); setValidatedRows(null); setFileTypeError(null); closePopover(); }}
         />
       </section>
 
