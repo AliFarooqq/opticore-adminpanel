@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import SupplierForm from '../components/suppliers/SupplierForm';
 import BrandForm from '../components/brands/BrandForm';
 import ImportRowEditForm from '../components/import/ImportRowEditForm';
+import FieldReferenceModal from '../components/import/FieldReferenceModal';
 import { downloadIvlStockTemplate, downloadIvlRxTemplate, downloadContactTemplate } from '../utils/csvTemplates';
 import { parseFile, fetchRefData, validateRows, revalidateSingleRow, importValidRows, detectFileType } from '../services/importParser';
 import { updateBrandMeta } from '../services/brandsService';
@@ -466,6 +467,7 @@ function ImportTab({ type }) {
   const [supplierModal, setSupplierModal] = useState(null); // { initialName } | null
   const [brandModal, setBrandModal] = useState(null); // { supplierId, initialName }
   const [editRowModal, setEditRowModal] = useState(null); // rowIdx
+  const [showFieldRef, setShowFieldRef] = useState(false);
 
   const isRx = type === 'ivl-rx';
   const supplierTypeForForm = type === 'contact' ? 'contact' : 'ivl';
