@@ -25,12 +25,12 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
 }
-/* ── Admin Panel Responsive ─────────────────────────────────────────────── */
 
 /* ── Admin Panel Responsive ─────────────────────────────────────────────── */
 .sidebar-nav {
   transition: transform 0.25s ease;
 }
+/* ── Admin Panel Responsive ─────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
   .sidebar-nav {
