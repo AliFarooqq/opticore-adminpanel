@@ -30,6 +30,7 @@ body {
 .sidebar-nav {
   transition: transform 0.25s ease;
 }
+/* ── Admin Panel Responsive ─────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
   .sidebar-nav {
