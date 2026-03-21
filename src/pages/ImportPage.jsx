@@ -474,10 +474,23 @@ function ImportTab({ type }) {
     if (!file) return;
     setValidating(true);
     setValidatedRows(null);
+    setFileTypeError(null);
     closePopover();
     try {
       setValidatePhase('fetching');
       const [ref, parsedRows] = await Promise.all([fetchRefData(), parseFile(file)]);
+
+      // Check file structure matches the active tab before proceeding
+      const detectedType = detectFileType(parsedRows);
+      if (detectedType && detectedType !== type) {
+        const labels = { 'ivl-stock': 'IVL Stock', 'ivl-rx': 'IVL RX', 'contact': 'Contact Lens' };
+        setFileTypeError(
+          `This file looks like an ${labels[detectedType]} template, but you're on the ${labels[type]} tab. ` +
+          `Please switch to the "${labels[detectedType]}" tab or upload the correct file.`
+        );
+        return;
+      }
+
       setRefData(ref);
       setValidatePhase('validating');
       const results = validateRows(parsedRows, type, ref.suppliers, ref.brands);
