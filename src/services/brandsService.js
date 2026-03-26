@@ -21,8 +21,8 @@ export async function updateBrand(supplierId, brandId, name) {
   await _updateBrand({ supplierId, brandId, name });
 }
 
-export async function updateBrandMeta(brandId, { coatings, tintTypes, tintColors }) {
-  await _updateBrandMeta({ brandId, coatings, tintTypes, tintColors });
+export async function updateBrandMeta(brandId, { coatings, tintTypes, tintColors, mirror }) {
+  await _updateBrandMeta({ brandId, coatings, tintTypes, tintColors, mirror });
 }
 
 export async function deleteBrand(supplierId, brandId) {

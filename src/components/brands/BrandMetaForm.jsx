@@ -144,6 +144,7 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
   const [coatings, setCoatings] = useState([]);
   const [tintTypes, setTintTypes] = useState([]);
   const [tintColors, setTintColors] = useState({});
+  const [mirror, setMirror] = useState([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -151,13 +152,14 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
       setCoatings(brand.coatings || []);
       setTintTypes(brand.tintTypes || []);
       setTintColors(brand.tintColors || {});
+      setMirror(brand.mirror || []);
     }
   }, [isOpen, brand]);
 
-  async function persist(updatedCoatings, updatedTintTypes, updatedTintColors) {
+  async function persist(updatedCoatings, updatedTintTypes, updatedTintColors, updatedMirror) {
     setSaving(true);
     try {
-      await updateBrandMeta(brand.id, { coatings: updatedCoatings, tintTypes: updatedTintTypes, tintColors: updatedTintColors });
+      await updateBrandMeta(brand.id, { coatings: updatedCoatings, tintTypes: updatedTintTypes, tintColors: updatedTintColors, mirror: updatedMirror });
       onSaved();
     } catch (err) {
       toast.error(err.message || 'Failed to save');
@@ -177,19 +179,19 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
     if (coatings.some(c => c.name === val)) return;
     const updated = [...coatings, { name: val, hasBlueProtection: false }];
     setCoatings(updated);
-    persist(updated, tintTypes, tintColors);
+    persist(updated, tintTypes, tintColors, mirror);
   }
 
   function removeCoating(name) {
     const updated = coatings.filter(c => c.name !== name);
     setCoatings(updated);
-    persist(updated, tintTypes, tintColors);
+    persist(updated, tintTypes, tintColors, mirror);
   }
 
   function moveCoating(index, direction) {
     const updated = moveItem(coatings, index, direction);
     setCoatings(updated);
-    persist(updated, tintTypes, tintColors);
+    persist(updated, tintTypes, tintColors, mirror);
   }
 
   function toggleCoatingBlue(index) {
@@ -197,13 +199,32 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
       i === index ? { ...c, hasBlueProtection: !c.hasBlueProtection } : c
     );
     setCoatings(updated);
-    persist(updated, tintTypes, tintColors);
+    persist(updated, tintTypes, tintColors, mirror);
   }
 
   function handleTintChange(newTintTypes, newTintColors) {
     setTintTypes(newTintTypes);
     setTintColors(newTintColors);
-    persist(coatings, newTintTypes, newTintColors);
+    persist(coatings, newTintTypes, newTintColors, mirror);
+  }
+
+  function addMirror(val) {
+    if (mirror.includes(val)) return;
+    const updated = [...mirror, val];
+    setMirror(updated);
+    persist(coatings, tintTypes, tintColors, updated);
+  }
+
+  function removeMirror(val) {
+    const updated = mirror.filter(m => m !== val);
+    setMirror(updated);
+    persist(coatings, tintTypes, tintColors, updated);
+  }
+
+  function moveMirror(index, direction) {
+    const updated = moveItem(mirror, index, direction);
+    setMirror(updated);
+    persist(coatings, tintTypes, tintColors, updated);
   }
 
   return (
