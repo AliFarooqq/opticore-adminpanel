@@ -4,6 +4,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { updateBrandMeta } from '../../services/brandsService';
 import { useToast } from '../../hooks/useToast';
+import TintColorsEditor from './TintColorsEditor';
 
 // isCoatings=true  → items are { name, hasBlueProtection } objects
 // isCoatings=false → items are plain strings (colors)
@@ -141,20 +142,22 @@ function MetaList({ title, items, onAdd, onRemove, onMove, onToggleBlue, isCoati
 export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
   const toast = useToast();
   const [coatings, setCoatings] = useState([]);
-  const [colors, setColors] = useState([]);
+  const [tintTypes, setTintTypes] = useState([]);
+  const [tintColors, setTintColors] = useState({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && brand) {
       setCoatings(brand.coatings || []);
-      setColors(brand.colors || []);
+      setTintTypes(brand.tintTypes || []);
+      setTintColors(brand.tintColors || {});
     }
   }, [isOpen, brand]);
 
-  async function persist(updatedCoatings, updatedColors) {
+  async function persist(updatedCoatings, updatedTintTypes, updatedTintColors) {
     setSaving(true);
     try {
-      await updateBrandMeta(brand.id, { coatings: updatedCoatings, colors: updatedColors });
+      await updateBrandMeta(brand.id, { coatings: updatedCoatings, tintTypes: updatedTintTypes, tintColors: updatedTintColors });
       onSaved();
     } catch (err) {
       toast.error(err.message || 'Failed to save');
@@ -174,19 +177,19 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
     if (coatings.some(c => c.name === val)) return;
     const updated = [...coatings, { name: val, hasBlueProtection: false }];
     setCoatings(updated);
-    persist(updated, colors);
+    persist(updated, tintTypes, tintColors);
   }
 
   function removeCoating(name) {
     const updated = coatings.filter(c => c.name !== name);
     setCoatings(updated);
-    persist(updated, colors);
+    persist(updated, tintTypes, tintColors);
   }
 
   function moveCoating(index, direction) {
     const updated = moveItem(coatings, index, direction);
     setCoatings(updated);
-    persist(updated, colors);
+    persist(updated, tintTypes, tintColors);
   }
 
   function toggleCoatingBlue(index) {
@@ -194,26 +197,13 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
       i === index ? { ...c, hasBlueProtection: !c.hasBlueProtection } : c
     );
     setCoatings(updated);
-    persist(updated, colors);
+    persist(updated, tintTypes, tintColors);
   }
 
-  function addColor(val) {
-    if (colors.includes(val)) return;
-    const updated = [...colors, val];
-    setColors(updated);
-    persist(coatings, updated);
-  }
-
-  function removeColor(val) {
-    const updated = colors.filter(c => c !== val);
-    setColors(updated);
-    persist(coatings, updated);
-  }
-
-  function moveColor(index, direction) {
-    const updated = moveItem(colors, index, direction);
-    setColors(updated);
-    persist(coatings, updated);
+  function handleTintChange(newTintTypes, newTintColors) {
+    setTintTypes(newTintTypes);
+    setTintColors(newTintColors);
+    persist(coatings, newTintTypes, newTintColors);
   }
 
   return (
