@@ -314,12 +314,13 @@ const defaultValues = {
   geometry: '',
   coating: '',
   color: '',
+  mirror: '',
   cylFormat: 'minus',
   wholesalePrice: '',
   retailPrice: '',
 };
 
-export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandTintTypes = [], brandTintColors = {} }) {
+export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandTintTypes = [], brandTintColors = {}, brandMirror = [] }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedTintType, setSelectedTintType] = useState('');
@@ -351,6 +352,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: lens.geometry || 'sph',
         coating: lens.coating || '',
         color: lens.color || '',
+        mirror: lens.mirror || '',
         availability: lens.availability || 'stock',
         cylFormat: lens.cylFormat || 'minus',
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
@@ -425,6 +427,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         geometry: data.geometry,
         coating: data.coating || '',
         color: selectedTintType ? (data.color || null) : null,
+        mirror: data.mirror || null,
         availability: data.availability,
       };
 
@@ -685,6 +688,30 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                 <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Tint Type (optional)</label>
                 <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
                   No tint types configured — add them via Brand Metadata
+                </div>
+              </div>
+            )}
+
+            {/* Mirror */}
+            {brandMirror.length > 0 ? (
+              <Controller
+                name="mirror"
+                control={control}
+                render={({ field }) => (
+                  <BottomSheetSelector
+                    label="Mirror (optional)"
+                    options={['', ...brandMirror]}
+                    labels={{ '': 'None', ...Object.fromEntries(brandMirror.map(m => [m, m])) }}
+                    value={field.value || ''}
+                    onChange={v => field.onChange(v || null)}
+                  />
+                )}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Mirror (optional)</label>
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                  No mirror options configured — add them via Brand Metadata
                 </div>
               </div>
             )}

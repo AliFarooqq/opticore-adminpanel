@@ -518,6 +518,7 @@ export default function IvlLensesPage() {
         brandCoatings={(brand?.coatings || []).map(c => typeof c === 'string' ? { name: c, hasBlueProtection: false } : c)}
         brandTintTypes={brand?.tintTypes || []}
         brandTintColors={brand?.tintColors || {}}
+        brandMirror={brand?.mirror || []}
       />
 
       <ConfirmDialog
