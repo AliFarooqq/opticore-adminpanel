@@ -255,6 +255,17 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
           saving={saving}
         />
 
+        <div style={{ height: 1, background: '#e2e8f0' }} />
+
+        <MetaList
+          title="Mirror"
+          items={mirror}
+          onAdd={addMirror}
+          onRemove={removeMirror}
+          onMove={moveMirror}
+          saving={saving}
+        />
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
           <Button variant="secondary" onClick={onClose}>Done</Button>
         </div>
