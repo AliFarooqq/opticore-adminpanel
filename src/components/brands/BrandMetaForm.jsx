@@ -210,7 +210,7 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={brand ? `Coatings & Colors — ${brand.name}` : 'Coatings & Colors'}
+      title={brand ? `Coatings & Tints — ${brand.name}` : 'Coatings & Tints'}
       size="md"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -227,12 +227,10 @@ export default function BrandMetaForm({ isOpen, onClose, brand, onSaved }) {
 
         <div style={{ height: 1, background: '#e2e8f0' }} />
 
-        <MetaList
-          title="Colors"
-          items={colors}
-          onAdd={addColor}
-          onRemove={removeColor}
-          onMove={moveColor}
+        <TintColorsEditor
+          tintTypes={tintTypes}
+          tintColors={tintColors}
+          onChange={handleTintChange}
           saving={saving}
         />
 

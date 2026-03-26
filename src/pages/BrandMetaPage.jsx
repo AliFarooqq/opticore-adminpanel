@@ -9,6 +9,7 @@ import { getIvlSupplier } from '../services/ivlSuppliersService';
 import { getContactSupplier } from '../services/contactSuppliersService';
 import { queryKeys } from '../lib/queryKeys';
 import { useToast } from '../hooks/useToast';
+import TintColorsEditor from '../components/brands/TintColorsEditor';
 
 // ── Reusable list section ─────────────────────────────────────────────────────
 
@@ -164,14 +165,16 @@ export default function BrandMetaPage({ supplierType }) {
   const brand = brands.find(b => b.id === brandId);
 
   const [coatings, setCoatings] = useState([]);
-  const [colors, setColors] = useState([]);
+  const [tintTypes, setTintTypes] = useState([]);
+  const [tintColors, setTintColors] = useState({});
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (brand) {
       setCoatings(brand.coatings || []);
-      setColors(brand.colors || []);
+      setTintTypes(brand.tintTypes || []);
+      setTintColors(brand.tintColors || {});
       setDirty(false);
     }
   }, [brand?.id]);
@@ -206,26 +209,16 @@ export default function BrandMetaPage({ supplierType }) {
     setDirty(true);
   }
 
-  function addColor(val) {
-    if (colors.includes(val)) return;
-    setColors(prev => [...prev, val]);
-    setDirty(true);
-  }
-
-  function removeColor(val) {
-    setColors(prev => prev.filter(c => c !== val));
-    setDirty(true);
-  }
-
-  function moveColor(index, direction) {
-    setColors(prev => moveItem(prev, index, direction));
+  function handleTintChange(newTintTypes, newTintColors) {
+    setTintTypes(newTintTypes);
+    setTintColors(newTintColors);
     setDirty(true);
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      await updateBrandMeta(brandId, { coatings, colors });
+      await updateBrandMeta(brandId, { coatings, tintTypes, tintColors });
       toast.success('Brand metadata saved');
       setDirty(false);
       queryClient.invalidateQueries({ queryKey: brandsKey });
@@ -263,7 +256,7 @@ export default function BrandMetaPage({ supplierType }) {
 
           {/* Description */}
           <p style={{ fontSize: 13, color: '#64748b', marginBottom: 24, margin: '0 0 24px 0' }}>
-            Manage the coatings and colors available for <strong>{brand?.name}</strong>.
+            Manage the coatings and tints available for <strong>{brand?.name}</strong>.
             These will appear as dropdown options when creating or editing lenses for this brand.
           </p>
 
@@ -278,12 +271,10 @@ export default function BrandMetaPage({ supplierType }) {
               onToggleBlue={toggleCoatingBlue}
               isCoatings
             />
-            <MetaSection
-              title="Colors"
-              items={colors}
-              onAdd={addColor}
-              onRemove={removeColor}
-              onMove={moveColor}
+            <TintColorsEditor
+              tintTypes={tintTypes}
+              tintColors={tintColors}
+              onChange={handleTintChange}
             />
           </div>
 
