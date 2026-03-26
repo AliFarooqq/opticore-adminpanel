@@ -167,6 +167,7 @@ export default function BrandMetaPage({ supplierType }) {
   const [coatings, setCoatings] = useState([]);
   const [tintTypes, setTintTypes] = useState([]);
   const [tintColors, setTintColors] = useState({});
+  const [mirror, setMirror] = useState([]);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -175,6 +176,7 @@ export default function BrandMetaPage({ supplierType }) {
       setCoatings(brand.coatings || []);
       setTintTypes(brand.tintTypes || []);
       setTintColors(brand.tintColors || {});
+      setMirror(brand.mirror || []);
       setDirty(false);
     }
   }, [brand?.id]);
@@ -215,10 +217,26 @@ export default function BrandMetaPage({ supplierType }) {
     setDirty(true);
   }
 
+  function addMirror(val) {
+    if (mirror.includes(val)) return;
+    setMirror(prev => [...prev, val]);
+    setDirty(true);
+  }
+
+  function removeMirror(val) {
+    setMirror(prev => prev.filter(m => m !== val));
+    setDirty(true);
+  }
+
+  function moveMirror(index, direction) {
+    setMirror(prev => moveItem(prev, index, direction));
+    setDirty(true);
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
-      await updateBrandMeta(brandId, { coatings, tintTypes, tintColors });
+      await updateBrandMeta(brandId, { coatings, tintTypes, tintColors, mirror });
       toast.success('Brand metadata saved');
       setDirty(false);
       queryClient.invalidateQueries({ queryKey: brandsKey });
@@ -275,6 +293,13 @@ export default function BrandMetaPage({ supplierType }) {
               tintTypes={tintTypes}
               tintColors={tintColors}
               onChange={handleTintChange}
+            />
+            <MetaSection
+              title="Mirror"
+              items={mirror}
+              onAdd={addMirror}
+              onRemove={removeMirror}
+              onMove={moveMirror}
             />
           </div>
 
