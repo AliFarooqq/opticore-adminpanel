@@ -516,7 +516,8 @@ export default function IvlLensesPage() {
         onSaved={() => queryClient.invalidateQueries({ queryKey: lensesKey })}
         activeTab={filter}
         brandCoatings={(brand?.coatings || []).map(c => typeof c === 'string' ? { name: c, hasBlueProtection: false } : c)}
-        brandColors={brand?.colors || []}
+        brandTintTypes={brand?.tintTypes || []}
+        brandTintColors={brand?.tintColors || {}}
       />
 
       <ConfirmDialog

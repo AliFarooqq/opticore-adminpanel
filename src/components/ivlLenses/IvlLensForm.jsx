@@ -319,9 +319,10 @@ const defaultValues = {
   retailPrice: '',
 };
 
-export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandColors = [] }) {
+export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandTintTypes = [], brandTintColors = {} }) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const [selectedTintType, setSelectedTintType] = useState('');
   const [variants, setVariants] = useState([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
   const [variantErrors, setVariantErrors] = useState({});
 
@@ -355,12 +356,17 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
       });
+      const foundTintType = lens.color
+        ? (Object.entries(brandTintColors).find(([, colors]) => colors.includes(lens.color))?.[0] || '')
+        : '';
+      setSelectedTintType(foundTintType);
       setVariants(lens.variants?.length ? lens.variants : [{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
     } else {
       reset({
         ...defaultValues,
         availability: activeTab !== 'all' ? activeTab : defaultValues.availability,
       });
+      setSelectedTintType('');
       setVariants([{ id: genId(), diameter: { mode: 'single', value: '' }, sphMin: '', sphMax: '', cylMin: '', cylMax: '', cylFormat: 'minus', wholesalePrice: '', retailPrice: '' }]);
     }
   }, [isOpen, lens, reset, activeTab]);
@@ -418,7 +424,7 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         refractiveIndex,
         geometry: data.geometry,
         coating: data.coating || '',
-        color: data.color || null,
+        color: selectedTintType ? (data.color || null) : null,
         availability: data.availability,
       };
 
@@ -662,28 +668,55 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
               )}
             />
 
-            <Controller
-              name="color"
-              control={control}
-              render={({ field }) => (
-                brandColors.length > 0 ? (
-                  <BottomSheetSelector
-                    label="Color (optional)"
-                    options={['', ...brandColors]}
-                    labels={{ '': 'None', ...Object.fromEntries(brandColors.map(c => [c, c])) }}
-                    value={field.value || ''}
-                    onChange={v => field.onChange(v || null)}
-                  />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Color (optional)</label>
-                    <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
-                      No colors configured — add them via Brand Metadata
-                    </div>
-                  </div>
-                )
-              )}
-            />
+            {/* Tint Type */}
+            {brandTintTypes.length > 0 ? (
+              <BottomSheetSelector
+                label="Tint Type (optional)"
+                options={['', ...brandTintTypes]}
+                labels={{ '': 'None', ...Object.fromEntries(brandTintTypes.map(t => [t, t])) }}
+                value={selectedTintType}
+                onChange={t => {
+                  setSelectedTintType(t);
+                  setValue('color', '');
+                }}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Tint Type (optional)</label>
+                <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                  No tint types configured — add them via Brand Metadata
+                </div>
+              </div>
+            )}
+
+            {/* Color — only when a tint type is selected */}
+            {selectedTintType && (() => {
+              const availableColors = brandTintColors[selectedTintType] || [];
+              return (
+                <Controller
+                  name="color"
+                  control={control}
+                  render={({ field }) => (
+                    availableColors.length > 0 ? (
+                      <BottomSheetSelector
+                        label="Color (optional)"
+                        options={['', ...availableColors]}
+                        labels={{ '': 'None', ...Object.fromEntries(availableColors.map(c => [c, c])) }}
+                        value={field.value || ''}
+                        onChange={v => field.onChange(v || null)}
+                      />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Color (optional)</label>
+                        <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: 13, color: '#94a3b8' }}>
+                          No colors configured for {selectedTintType}
+                        </div>
+                      </div>
+                    )
+                  )}
+                />
+              );
+            })()}
           </div>
         </section>
 
