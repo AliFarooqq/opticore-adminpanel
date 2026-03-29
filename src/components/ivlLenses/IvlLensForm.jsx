@@ -750,6 +750,34 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
                 />
               );
             })()}
+
+            {/* CYL > 4 Handling */}
+            <Controller
+              name="cyl4Handling"
+              control={control}
+              render={({ field }) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <RadioGroup
+                    label="CYL > 4 Handling"
+                    options={['included', 'extra_charge']}
+                    labels={{ included: 'Included', extra_charge: 'Extra Charge' }}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                  {field.value === 'extra_charge' && (
+                    <Input
+                      label="CYL > 4 Price"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      prefix="€"
+                      placeholder="0.00"
+                      {...register('cyl4Price')}
+                    />
+                  )}
+                </div>
+              )}
+            />
           </div>
         </section>
 
