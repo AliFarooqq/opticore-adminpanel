@@ -318,6 +318,8 @@ const defaultValues = {
   cylFormat: 'minus',
   wholesalePrice: '',
   retailPrice: '',
+  cyl4Handling: 'included',
+  cyl4Price: '',
 };
 
 export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens, onSaved, activeTab = 'all', brandCoatings = [], brandTintTypes = [], brandTintColors = {}, brandMirror = [] }) {
@@ -357,6 +359,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         cylFormat: lens.cylFormat || 'minus',
         wholesalePrice: lens.wholesalePrice != null ? String(lens.wholesalePrice) : '',
         retailPrice: lens.retailPrice != null ? String(lens.retailPrice) : '',
+        cyl4Handling: lens.cyl4Handling || 'included',
+        cyl4Price: lens.cyl4Price != null ? String(lens.cyl4Price) : '',
       });
       const foundTintType = lens.color
         ? (Object.entries(brandTintColors).find(([, colors]) => colors.includes(lens.color))?.[0] || '')
@@ -429,6 +433,8 @@ export default function IvlLensForm({ isOpen, onClose, supplierId, brandId, lens
         color: selectedTintType ? (data.color || null) : null,
         mirror: data.mirror || null,
         availability: data.availability,
+        cyl4Handling: data.cyl4Handling || 'included',
+        cyl4Price: data.cyl4Handling === 'extra_charge' && data.cyl4Price ? parseFloat(data.cyl4Price) : null,
       };
 
       const payload = data.availability === 'stock'
